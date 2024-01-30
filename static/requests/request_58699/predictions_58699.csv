@@ -1,6 +1,0 @@
-;image_path;knownclass_confidence;highest_species_prediction;highest_species_confidence;second_highest_species_prediction;second_highest_species_confidence;image_name
-0;static/requests/request_58699/aedes_aegypti_aedesgeneticdiversity_0aa1866f8813.png;1.0;Aedes aegypti;0.894;Anopheles maculipennis;0.0;aedes_aegypti_aedesgeneticdiversity_0aa1866f8813.png
-1;static/requests/request_58699/aedes_aegypti_aedesgeneticdiversity_0ada62e1effe.png;1.0;Aedes aegypti;0.824;Aedes koreicus;0.0;aedes_aegypti_aedesgeneticdiversity_0ada62e1effe.png
-2;static/requests/request_58699/aedes_aegypti_aedesgeneticdiversity_0b03ebb48d1d.png;1.0;Aedes aegypti;0.978;Aedes punctor;0.0;aedes_aegypti_aedesgeneticdiversity_0b03ebb48d1d.png
-3;static/requests/request_58699/aedes_aegypti_aedesgeneticdiversity_0b156a795b93.png;1.0;Aedes aegypti;0.928;Aedes koreicus;0.0;aedes_aegypti_aedesgeneticdiversity_0b156a795b93.png
-4;static/requests/request_58699/aedes_aegypti_aedesgeneticdiversity_0b3254cf81f5.png;1.0;Aedes aegypti;0.965;Aedes koreicus;0.0;aedes_aegypti_aedesgeneticdiversity_0b3254cf81f5.png
