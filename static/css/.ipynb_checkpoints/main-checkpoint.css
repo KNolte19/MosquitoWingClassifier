@@ -1,0 +1,42 @@
+/* main.css */
+* {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    color: #444;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+h1, h2 {
+    color: #444;
+    margin-bottom: 10px;
+    margin-top: 10px;
+}
+
+table-image {
+    width: 150px;
+    height: auto;
+ }
+
+img {
+    width: 150px ;
+    height: auto;
+    }
+
+.btn-submit {
+    width: 20%;
+    background: #4682B4;
+    color: #fff;
+    margin-bottom: 10px;
+    margin-top: 10px;
+    padding: 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.btn-submit:hover {
+    color: #fff;
+    background: #386890;
+}

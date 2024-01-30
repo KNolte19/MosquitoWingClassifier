@@ -1,0 +1,11 @@
+pandas
+Flask
+Werkzeug
+rembg
+numpy
+tensorflow
+keras-cv
+Pillow
+scikit-image
+joblib
+scikit-learn
