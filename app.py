@@ -13,9 +13,8 @@ from rembg import new_session
 
 #CONFIGURATIONS
 app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['STATIC_FOLDER'] = 'static'
-app.config['REQUESTS'] = 'requests'
+app.config['REQUESTS'] = 'static/requests'
 
 #HELPER FUNCTIONS
 ALLOWED_EXTENSIONS = {'png', 'jpeg', "tif", "jpg"}
@@ -41,40 +40,44 @@ def start():
 
 @app.route('/upload_folder', methods=['POST'])
 def upload_folder():
+    # CREATES NEW DIRECTORY FOR REQUEST 
+    session['identifier'] = get_identifier()
+    session['request_path'] = os.path.join(app.config['REQUESTS'], "request_{}".format(session['identifier']))
+    session['request_path_raw'] = os.path.join(session['request_path'], "raw")
+    session['request_path_processed'] = os.path.join(session['request_path'], "processed")
+
+    os.mkdir(session['request_path'])
+    os.mkdir(session['request_path_raw'])
+    os.mkdir(session['request_path_processed'])
+    
+    # CREATES NEW SESSION FOR REMBG
+    bgremove_session = new_session()
+    
     # CHECK IF FILES ARE VALID
     files = request.files.getlist("file") 
     for file in files:
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
             try:  
-                file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+                # files are saved as we want to store both the raw and processed version
+                file.save(os.path.join(session['request_path_raw'], filename))
             except Exception as e:
                 return f'Error saving file: {str(e)}', 500  
         else:
             return "{} was not uploaded, operation stopped".format(file.filename)
 
-    # CREATES NEW SESSION FOR REMBG
-    bgremove_session = new_session()
-
-    # CREATES NEW DIRECTORY FOR REQUEST 
-    session['identifier'] = get_identifier()
-    session['request_path'] = os.path.join(app.config['REQUESTS'], "requests", "request_{}".format(session['identifier']))
-    
-    os.mkdir(session['request_path'])
-    
     for file in files:
         filename = secure_filename(file.filename)
-
         # PROCESS IMAGES BY SECONDARY SCRIPT
-        image_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+        image_path = os.path.join(session['request_path_raw'], filename)
         processed_img = process_image(image_path, bgremove_session)
 
         # SAVE FILE AS PNG TO FOLDER
-        processed_img_path = os.path.join(session['request_path'], filename.split(".")[0]+".png")
+        processed_img_path = os.path.join(session['request_path_processed'], filename.split(".")[0]+".png")
         processed_img.save(processed_img_path)
         
     # CNN PREDICT SPECIES
-    prediction_df = get_system_prediction(session['request_path'])
+    prediction_df = get_system_prediction(os.path.join(session['request_path_processed']))
     predictiondf_path = os.path.join(session['request_path'], "predictions_{}.csv".format(session['identifier']))
     prediction_df.to_csv(predictiondf_path, sep=';')
         
