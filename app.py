@@ -15,9 +15,10 @@ from rembg import new_session
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['STATIC_FOLDER'] = 'static'
+app.config['REQUESTS'] = 'requests'
 
 #HELPER FUNCTIONS
-ALLOWED_EXTENSIONS = {'png', 'jpeg'}
+ALLOWED_EXTENSIONS = {'png', 'jpeg', "tif", "jpg"}
 app.secret_key = 'Apfelkuchen' 
 
 def allowed_file(filename):
@@ -57,7 +58,7 @@ def upload_folder():
 
     # CREATES NEW DIRECTORY FOR REQUEST 
     session['identifier'] = get_identifier()
-    session['request_path'] = os.path.join(app.config['STATIC_FOLDER'], "requests", "request_{}".format(session['identifier']))
+    session['request_path'] = os.path.join(app.config['REQUESTS'], "requests", "request_{}".format(session['identifier']))
     
     os.mkdir(session['request_path'])
     
