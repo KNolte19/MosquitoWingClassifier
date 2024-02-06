@@ -2,7 +2,6 @@ import pandas as pd
 import numpy as np
 import tensorflow as tf
 import os 
-import keras_cv
 
 from skimage.measure import label, regionprops_table
 from rembg import remove, new_session
