@@ -27,6 +27,7 @@ def allowed_file(filename):
 def get_identifier():
     #encodes current time as unique code
     def encode_string(input_string):
+        #todo: uuid
        encoded = hashlib.md5(input_string.encode()).hexdigest()
        return encoded[:5]
     
