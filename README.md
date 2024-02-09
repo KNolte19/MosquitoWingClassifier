@@ -29,6 +29,6 @@ bash docker build -t app .
 
 **Support:** Contact us at kristopher.nolte@bnitm.de for any inquiries or assistance.
 
-**Version:** v0.0.1
+**Version:** v0.0.2
 
-**Last Updated:** February  8,  2024
+**Last Updated:** February  9,  2024

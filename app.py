@@ -1,15 +1,17 @@
 import os
 import pandas as pd
-import hashlib
+import uuid
 import shutil
 import zipfile
+import tempfile
 
-from flask import Flask, render_template, request, send_file, session
+from flask import Flask, render_template, request, session, send_file
 from werkzeug.utils import secure_filename
 from datetime import datetime
 from image_processing import process_image
 from models_prediction import get_system_prediction
 from rembg import new_session
+from zipfile import ZipFile
 
 #CONFIGURATIONS
 app = Flask(__name__)
@@ -25,13 +27,8 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 def get_identifier():
-    #encodes current time as unique code
-    def encode_string(input_string):
-        #todo: uuid
-       encoded = hashlib.md5(input_string.encode()).hexdigest()
-       return encoded[:5]
-    
-    return encode_string(datetime.now().strftime("%d%m%y%H%M%S"))
+    # get radom identifier for each request
+    return str(uuid.uuid4())[:8]
 
 #SERVER
 @app.route('/')
@@ -41,7 +38,7 @@ def start():
 
 @app.route('/upload_folder', methods=['POST'])
 def upload_folder():
-    # CREATES NEW DIRECTORY FOR REQUEST 
+    # CREATES NEW DIRECTORY FOR THE REQUEST 
     session['identifier'] = get_identifier()
     session['request_path'] = os.path.join(app.config['REQUESTS'], "request_{}".format(session['identifier']))
     session['request_path_raw'] = os.path.join(session['request_path'], "raw")
@@ -65,6 +62,7 @@ def upload_folder():
             except Exception as e:
                 return f'Error saving file: {str(e)}', 500  
         else:
+            ## ToDo: require image upload for botton
             return "{} was not uploaded, operation stopped".format(file.filename)
 
     for file in files:
@@ -73,7 +71,7 @@ def upload_folder():
         image_path = os.path.join(session['request_path_raw'], filename)
         processed_img = process_image(image_path, bgremove_session)
 
-        # SAVE FILE AS PNG TO FOLDER
+        # SAVE PROCESSED FILES AS PNG TO FOLDER
         processed_img_path = os.path.join(session['request_path_processed'], filename.split(".")[0]+".png")
         processed_img.save(processed_img_path)
         
@@ -91,19 +89,34 @@ def download_csv():
 
 @app.route('/download_folder', methods=['GET'])
 def download_folder():
-    zip_filename = 'request_{}.zip'.format(session['identifier'])
+    folder_path = session['request_path']
+    zip_file_name = 'request_{}.zip'.format(session['identifier'])
+    zip_path = os.path.join(tempfile.gettempdir(), zip_file_name)
+            
+    try:
+        with ZipFile(zip_path, 'w') as zipObj:
+            # Get the root directory name to exclude from the zip archive
+            root_dir = os.path.basename(os.path.normpath(folder_path))
+            
+            # Iterate over all the files in directory
+            for folderName, subfolders, filenames in os.walk(folder_path):
+                for filename in filenames:
+                    # Create complete filepath of file in directory
+                    filePath = os.path.join(folderName, filename)
+                    
+                    # Get the relative path to the file, excluding the first two parent directories
+                    arcname = os.path.relpath(filePath, folder_path).replace(root_dir + os.sep, '',  1)
+                    
+                    # Add file to zip with the new relative path
+                    zipObj.write(filePath, arcname=arcname)
+        
+        # Send the zipped file
+        return send_file(zip_path, as_attachment=True)
+    finally:
+        # Remove the temporary zip file after sending
+        if os.path.exists(zip_path):
+            os.remove(zip_path)
 
-    # Create a ZipFile Object in write mode
-    with zipfile.ZipFile(zip_filename, 'w') as zipObj:
-        # List files in the directory
-        for filename in os.listdir(session['request_path']):
-            # Create complete filepath of file in directory
-            filePath = os.path.join(session['request_path'], filename)
-            # Add file to zip without any folder structure
-            zipObj.write(filePath, arcname=filename)
-
-    # Send the zip file
-    return send_file(zip_filename, as_attachment=True)
     
 if __name__ == '__main__':
     app.run()

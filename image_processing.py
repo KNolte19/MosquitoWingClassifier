@@ -1,7 +1,5 @@
-import pandas as pd
 import numpy as np
 import tensorflow as tf
-import os 
 
 from skimage.measure import label, regionprops_table
 from rembg import remove, new_session
@@ -43,13 +41,20 @@ def process_image(src_img_path, session):
         white_background = np.full((max_size, max_size, channels), 0, dtype=np.uint8)
         paste_position = (0, int((max_size-height)/2))
         white_background[paste_position[1]:paste_position[1]+height, paste_position[0]:paste_position[0]+width] = image
-        padded_image = tf.image.resize_with_pad(white_background, 2000, 2000).numpy()
+        
+        padded_image = tf.image.resize_with_pad(white_background, 384, 384).numpy()
         padded_image_uint = padded_image.astype(np.uint8)
         padded_image_img = Image.fromarray(padded_image_uint)
         return padded_image_img
+
+    def make_greyscale(image):
+        gray_img = tf.image.rgb_to_grayscale(image)
+        image = tf.repeat(gray_img, repeats=3, axis=-1)
+        return image
         
     input = Image.open(src_img_path)
     rotated_image = remove_bg_and_rotate(input)
-    image_filled = add_blank_background(rotated_image)
-
+    grey_image = make_greyscale(rotated_image)
+    image_filled = add_blank_background(grey_image)
+    
     return image_filled
