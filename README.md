@@ -9,12 +9,15 @@ Please note that this version is intended for testing and validation purposes. A
 To deploy LandRoval on your local machine, you need to have Python and Docker installed. Follow the steps below to set up the application:
 
 1. **Clone the Repository:**
-bash git clone https://github.com/KNolte19/MosquitoWingClassifier.git
+git clone https://github.com/KNolte19/MosquitoWingClassifier.git
 
 2. **Build the Docker Image:**
-bash docker build -t app .
+docker build -t app .
 
-4. **Access the Application:**
+3. **Run Docker**
+docker run -t app 
+
+5. **Access the Application:**
    Open your web browser and navigate to `http://localhost:8000`.
 
 ## Features

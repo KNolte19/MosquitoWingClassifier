@@ -6,15 +6,14 @@ from joblib import dump, load
 
 # SET PARAMETERS
 IMG_SIZE = 384
-CNN_MODEL_PATH = "models/cnn_model.keras"
 SPECIES_NAMES = ['Aedes albopictus', 'Culex pipiens', 'Culex tritaeniorhynchus', 'Aedes aegypti', 'Aedes cantans',
                  'Aedes cataphylla', 'Aedes punctor', 'Aedes communis', 'Aedes cinereus', 'Anopheles claviger',
                  'Anopheles maculipennis', 'Aedes sticticus', 'Aedes rusticus', 'Aedes vexans', 'Coquillettidia richiardii',
                  'Aedes japonicus', 'Aedes koreicus', 'Aedes stephensi']
 
 # LOAD MODEL
-cnn_model = tf.keras.models.load_model(CNN_MODEL_PATH, compile=False)
-novelty_model = load("models/novelty_detector.joblib")
+cnn_model = tf.keras.models.load_model("static/models/cnn_model.h5", compile=False)
+novelty_model = load("static/models/novelty_detector.joblib")
 
 def getImage(file_path):
     # Load the raw data from the file as a string
