@@ -1,6 +1,6 @@
 /* Reset some default styles */
 * {
-    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-family: Calibri, sans-serif;
     color: #444;
     background-color: #f9f9f9;
     margin: 0;
@@ -9,7 +9,7 @@
 }
 
 body {
-    font-family: 'Arial', sans-serif;
+    font-family: Calibri, sans-serif;
     background-color: #f4f4f4;
     color: #333;
     line-height: 1.6;
@@ -27,7 +27,7 @@ body {
 
 h1, h2 {
     text-align: center;
-    color: #333;
+    color: #196082;
     background: #fff;
 }
 
@@ -61,13 +61,15 @@ img {
     padding: 10px;
     border: 1px solid #ddd;
     border-radius: 4px;
-    background-color: #b0c4de;
+    background-color: #bcbcbc;
+    font-size: 16px;
 }
+
 
 .btn-submit {
     display: block;
     width: 100%;
-    background: #4682B4;
+    background: #196082;
     color: #fff;
     padding: 10px;
     border: none;
@@ -77,7 +79,12 @@ img {
 }
 
 .btn-submit:hover {
-    background: #386890;
+    background: #005C69;
+}
+
+.btn-submit:disabled {
+    background-color: #bcbcbc;
+    cursor: not-allowed; 
 }
 
 .logo-container {
@@ -125,6 +132,7 @@ img {
 }
 
 .tooltip-text {
+  font-family: Calibri, sans-serif;
   background-color: #fff;
   color: #555;
   text-align: center;

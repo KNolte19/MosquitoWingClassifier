@@ -1,6 +1,6 @@
 /* main.css */
 * {
-    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-family: Calibri, sans-serif;
     color: #444;
     margin: 0;
     padding: 0;
@@ -25,7 +25,7 @@ img {
 
 .btn-submit {
     width: 20%;
-    background: #4682B4;
+    background: #196082;
     color: #fff;
     margin-bottom: 10px;
     margin-top: 10px;
@@ -38,5 +38,5 @@ img {
 
 .btn-submit:hover {
     color: #fff;
-    background: #386890;
+    background: #005C69;
 }

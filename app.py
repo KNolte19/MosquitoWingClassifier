@@ -78,9 +78,24 @@ def upload_folder():
     # CNN PREDICT SPECIES
     prediction_df = get_system_prediction(os.path.join(session['request_path_processed']))
     predictiondf_path = os.path.join(session['request_path'], "predictions_{}.csv".format(session['identifier']))
-    prediction_df.to_csv(predictiondf_path, sep=';')
-        
-    return render_template('predictions.html', predictions=prediction_df.to_dict(orient='records'))
+    
+    prediction_df[["image_name",
+                   "knownclass_confidence",
+                   "highest_species_prediction",
+                   "highest_species_confidence",
+                   "second_highest_species_prediction",
+                   "second_highest_species_confidence"]].to_csv(predictiondf_path, sep=';')
+
+    # Save the request
+    prediction_dict = prediction_df.to_dict(orient='records')
+    title = str(session['identifier'])
+    
+    return render_template('predictions.html', predictions=prediction_dict, request=title)
+
+@app.route('/display_pdf')
+def display_pdf():
+    pdf_path = os.path.join(app.config['STATIC_FOLDER'], "guide", "ConVector_MosquitoWingRemovalGuide.pdf")
+    return send_file(pdf_path, as_attachment=False)
 
 @app.route('/download_csv', methods=['GET'])
 def download_csv():

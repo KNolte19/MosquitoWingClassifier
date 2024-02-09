@@ -1,15 +1,16 @@
 <!doctype html>
 <html>
+<br>
  <head>
-   <title>Image Predictions</title>
+   <title>LandRoval Image Predictions - {{ request }}</title>
    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css" rel="stylesheet">
    <link href="/static/css/main.css" rel="stylesheet">
  </head>
 
    <div class="container">
-     <h1>Image Predictions</h1>
+     <h1>Image Predictions - {{ request }}</h1>
        <!-- bootstrap btn-group anschauen -->
-        <a href="/download_csv" class="btn btn--primary">Download Table as CSV</a>
+        <a href="/download_csv" class="btn-submit">Download Table as CSV</a>
         <a href="/download_folder" class="btn-submit">Download Folder</a>
      <table class="table table-striped">
        <thead>
@@ -18,7 +19,7 @@
            <th>Image</th>
            <th>Species Prediction</th>
            <th>Species Confidence</th>
-           <th>Known Confidence</th>
+           <th>Known Species Confidence</th>
            <th>2nd Species</th>
            <th>2nd Species Confidence</th>
          </tr>
