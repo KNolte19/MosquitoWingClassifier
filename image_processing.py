@@ -1,9 +1,11 @@
 import numpy as np
 import tensorflow as tf
-
+import keras_cv
 from skimage.measure import label, regionprops_table
 from rembg import remove, new_session
 from PIL import Image
+
+AutoContrast = keras_cv.layers.AutoContrast(value_range=(0, 255))
 
 def process_image(src_img_path, session):
     def remove_bg_and_rotate(image):
@@ -48,6 +50,7 @@ def process_image(src_img_path, session):
         return padded_image_img
 
     def make_greyscale(image):
+        contrast_img = AutoContrast(image)
         gray_img = tf.image.rgb_to_grayscale(image)
         image = tf.repeat(gray_img, repeats=3, axis=-1)
         return image
