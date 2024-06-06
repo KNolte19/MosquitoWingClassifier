@@ -14,11 +14,12 @@ git clone https://github.com/KNolte19/MosquitoWingClassifier.git
 2. **Build the Docker Image:**
 docker build -t app .
 
-3. **Run Docker**
-docker run -t app 
+3. **Run Docker** 
+You have to change the path to your copy of this repo in the command
+docker run -p 5050:5050 -v /<path>/<to>/<repo>/app/static/requests:/app/static/requests app
 
 5. **Access the Application:**
-   Open your web browser and navigate to `http://localhost:8000`.
+Open your web browser and navigate to `http://localhost:5050`.
 
 ## Features
 - **Image Upload:** Users can upload images of mosquito wings directly through the web interface.
@@ -32,6 +33,6 @@ docker run -t app
 
 **Support:** Contact us at kristopher.nolte@bnitm.de for any inquiries or assistance.
 
-**Version:** v0.0.2
+**Version:** v0.0.3
 
-**Last Updated:** February  9,  2024
+**Last Updated:** June  6,  2024

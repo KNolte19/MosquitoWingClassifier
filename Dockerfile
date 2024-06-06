@@ -28,6 +28,9 @@ RUN adduser \
     --uid "${UID}" \
     appuser
 
+RUN mkdir -p /app/static/requests \
+    && chown -R appuser:appuser /app/static/requests
+
 ENV NUMBA_CACHE_DIR=/tmp    
 
 # Download dependencies as a separate step to take advantage of Docker's caching.
@@ -38,14 +41,17 @@ COPY requirements.txt .
 RUN --mount=type=cache,target=/root/.cache/pip \
     python -m pip install -r requirements.txt
 
-# Switch to the non-privileged user to run the application.
-USER appuser
-
 # Copy the source code into the container.
 COPY . .
 
+# Ensure the entrypoint script is executable.
+RUN chmod +x /app/entrypoint.sh
+
+# Switch to the non-privileged user to run the application.
+USER appuser
+
 # Expose the port that the application listens on.
-EXPOSE 8000
+EXPOSE 5050
 
 # Run the application.
-CMD ["./entrypoint.sh"]
+ENTRYPOINT ["./entrypoint.sh"]
