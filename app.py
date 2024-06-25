@@ -38,14 +38,12 @@ def start():
 
 @app.route('/upload_folder', methods=['POST'])
 def upload_folder():
-    # CREATES NEW DIRECTORY FOR THE REQUEST 
+    # CREATES NEW DIRECTORY FOR THE REQUEST
     session['identifier'] = get_identifier()
     session['request_path'] = os.path.join(app.config['REQUESTS'], "request_{}".format(session['identifier']))
-    session['request_path_raw'] = os.path.join(session['request_path'], "raw")
     session['request_path_processed'] = os.path.join(session['request_path'], "processed")
 
     os.mkdir(session['request_path'])
-    os.mkdir(session['request_path_raw'])
     os.mkdir(session['request_path_processed'])
     
     # CREATES NEW SESSION FOR REMBG
@@ -56,26 +54,18 @@ def upload_folder():
     for file in files:
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
-            try:  
-                # files are saved as we want to store both the raw and processed version
-                file.save(os.path.join(session['request_path_raw'], filename))
+            # PROCESS IMAGES DIRECTLY FROM MEMORY, SKIP SAVING RAW FILES
+            try:
+                # Assume `process_image` can take a file stream directly:
+                processed_img = process_image(file.stream, bgremove_session)
+                processed_img_path = os.path.join(session['request_path_processed'], filename.split(".")[0]+".png")
+                processed_img.save(processed_img_path)
             except Exception as e:
-                return f'Error saving file: {str(e)}', 500  
+                return f'Error processing file: {str(e)}', 500  
         else:
-            ## ToDo: require image upload for botton
             return "{} was not uploaded, operation stopped".format(file.filename)
-
-    for file in files:
-        filename = secure_filename(file.filename)
-        # PROCESS IMAGES BY SECONDARY SCRIPT
-        image_path = os.path.join(session['request_path_raw'], filename)
-        processed_img = process_image(image_path, bgremove_session)
-
-        # SAVE PROCESSED FILES AS PNG TO FOLDER
-        processed_img_path = os.path.join(session['request_path_processed'], filename.split(".")[0]+".png")
-        processed_img.save(processed_img_path)
-        
-    # CNN PREDICT SPECIES
+    
+    # CONTINUE AS PREVIOUSLY FOR PREDICTION AND RESPONSE HANDLING
     prediction_df = get_system_prediction(os.path.join(session['request_path_processed']))
     predictiondf_path = os.path.join(session['request_path'], "predictions_{}.csv".format(session['identifier']))
     
@@ -85,7 +75,6 @@ def upload_folder():
                    "second_highest_species_prediction",
                    "second_highest_species_confidence"]].to_csv(predictiondf_path, sep=';')
 
-    # Save the request
     prediction_dict = prediction_df.to_dict(orient='records')
     title = str(session['identifier'])
     

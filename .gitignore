@@ -6,3 +6,4 @@ static/requests
 app_env
 .Rhistory
 u2net.onnx
+static/.DS_Store

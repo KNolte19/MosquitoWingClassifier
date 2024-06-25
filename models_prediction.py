@@ -13,7 +13,7 @@ SPECIES_NAMES = ['modestus', 'cinereus', 'communis-punctor', 'rusticus',
        'caspius', 'cataphylla', 'vishnui-group']
 
 # LOAD MODEL
-cnn_model = tf.keras.models.load_model("static/models/TUNING_9_2024-06-13-10-07", compile=False)
+cnn_model = tf.keras.models.load_model("static/models/TUNING_1_2024-06-13-12-26.h5", compile=False)
 
 def getImage(file_path):
     # Load the raw data from the file as a string
