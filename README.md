@@ -1,25 +1,29 @@
-# LandRoval - Mosquito Wing Species Classification
+# NAME_NEEDED - Mosquito Wing Species Classification
 
 ## Overview
-LandRoval is a web-based app designed to assist in identifying mosquito wing species through image analysis. Users can upload images of mosquito wings and receive classifications for the species present. The service is built using Flask and Gunicorn, providing a user-friendly interface accessible via a web browser.
+NAME_NEEDED is a web-based app designed to assist in identifying mosquito wing species through image analysis. Users can upload images of mosquito wings and receive classifications for the species present. The service is built using Flask and Gunicorn, providing a user-friendly interface accessible via a web browser.
 
 Please note that this version is intended for testing and validation purposes. Although the classification model is reliable, there may be occasional misclassifications. For decisions requiring high accuracy, it is recommended to consult with  experts or utilize additional resources. Each prediction includes a confidence level metric to gauge the reliability of the classification. Upon submission, you will receive an identifier for accessing the prediction results or processed images.
 
 ## Getting Started
-To deploy LandRoval on your local machine, you need to have Python and Docker installed. Follow the steps below to set up the application:
+To deploy NAME_NEEDED on your local machine, you need to have Python and Docker installed. Follow the steps below to set up the application:
 
 1. **Clone the Repository:**\
 `git clone https://github.com/KNolte19/MosquitoWingClassifier.git`
 
-2. **Build the Docker Image:**\
+2. **Download remBG weights to avoid unnecessary download**\
+`https://github.com/danielgatis/rembg/releases/download/v0.0.0/u2net.onnx`
+
+3. **Build the Docker Image:**\
 `docker build -t app .`
 
-3. **Run Docker** \
+4. **Run Docker** \
 You have to change the path to the copy of this repo on your machine\
 `docker run -p 5050:5050 -v /path/to/repo/app/static/requests:/app/static/requests app`
 
 5. **Access the Application:**\
 Open your web browser and navigate to `http://localhost:5050`.
+
 
 ## Features
 - **Image Upload:** Users can upload images of mosquito wings directly through the web interface.
