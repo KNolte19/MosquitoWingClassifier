@@ -5,3 +5,4 @@ __pycache__
 static/requests
 app_env
 .Rhistory
+u2net.onnx

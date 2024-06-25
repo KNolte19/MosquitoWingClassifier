@@ -80,7 +80,6 @@ def upload_folder():
     predictiondf_path = os.path.join(session['request_path'], "predictions_{}.csv".format(session['identifier']))
     
     prediction_df[["image_name",
-                   "knownclass_confidence",
                    "highest_species_prediction",
                    "highest_species_confidence",
                    "second_highest_species_prediction",

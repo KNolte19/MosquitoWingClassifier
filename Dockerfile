@@ -10,6 +10,8 @@ ENV PYTHONDONTWRITEBYTECODE=1
 # the application crashes without emitting any logs due to buffering.
 ENV PYTHONUNBUFFERED=1
 
+COPY u2net.onnx /home/appuser/.u2net/u2net.onnx
+
 WORKDIR /app
 
 # Install system dependencies required for h5py and other Python packages.

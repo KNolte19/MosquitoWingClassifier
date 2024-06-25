@@ -19,7 +19,6 @@
            <th>Image</th>
            <th>Species Prediction</th>
            <th>Species Confidence</th>
-           <th>Known Species Confidence</th>
            <th>2nd Species</th>
            <th>2nd Species Confidence</th>
          </tr>
@@ -31,7 +30,6 @@
              <td><img src="{{ prediction.image_path }}" alt="Image"></td>
              <td>{{ prediction.highest_species_prediction }}</td>
              <td>{{ prediction.highest_species_confidence }}</td>
-             <td>{{ prediction.knownclass_confidence }}</td>
              <td>{{ prediction.second_highest_species_prediction }}</td>
              <td>{{ prediction.second_highest_species_confidence }}</td>
            </tr>
