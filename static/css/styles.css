@@ -1,148 +1,133 @@
-/* Reset some default styles */
-* {
-    font-family: Calibri, sans-serif;
-    color: #444;
-    background-color: #f9f9f9;
+/* General Styles */
+body {
+    font-family: 'Roboto', sans-serif;
     margin: 0;
     padding: 0;
-    box-sizing: border-box;
-}
-
-body {
-    font-family: Calibri, sans-serif;
     background-color: #f4f4f4;
     color: #333;
-    line-height: 1.6;
-    padding: 20px;
+    font-size: 18px; /* Default font size for body text */
 }
 
 .container {
-    max-width: 700px;
-    margin: auto;
-    background: #fff;
+    width: 50%;
+    margin: 0 auto;
     padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-h1, h2 {
-    text-align: center;
-    color: #196082;
-    background: #fff;
-}
-
-h1 {
-    margin-bottom: 10px;
-}
-
-h2 {
-    margin-top: 20px;
-    margin-bottom: 5px;
-    font-weight: normal;
-    color: #555;
-    background: #fff;
-}
-
-img {
-  display: block;
-  margin: 20px auto;
-  max-width: 100%;
-  height: auto;
-  margin: 0 auto;
-  padding: 0px;
-  background-color: #ffffff;
-  border-radius: 10px;
-  box-sizing: border-box;  
-}
-
-.input-file {
-    width: 100%;
-    margin-bottom: 20px;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    background-color: #bcbcbc;
-    font-size: 16px;
-}
-
-
-.btn-submit {
-    display: block;
-    width: 100%;
-    background: #196082;
-    color: #fff;
-    padding: 10px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 16px;
-}
-
-.btn-submit:hover {
-    background: #005C69;
-}
-
-.btn-submit:disabled {
-    background-color: #bcbcbc;
-    cursor: not-allowed; 
-}
-
-.logo-container {
-    margin-top: 20px;
     background-color: #fff;
-    text-align: center;
-    padding: 20px;
-    display: flex;
-    justify-content: center;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
-.logo-container img {
-  width: auto;
-  background-color: #fff;
-  max-height: 100px;
+/* Section Styles */
+main {
+    padding-left: 20px;
+    padding-right: 20px;
+    padding-bottom: 20px;
 }
 
-.bernhard-nocht-logo {
-    background-color: #fff;
-    padding: 20px;
-}
-.haw-hamburg-logo {
-    background-color: #fff;
-    padding: 20px;
+section {
+    margin-bottom: 0px;
 }
 
-.logo-container-wings {
-    margin-top: 0px;
-    background-color: #fff;
-    text-align: center;
-    padding: 20px;
-    display: flex;
-    justify-content: center;
+.introduction, .upload-section, .contact {
+    padding-left: 20px;
+    padding-right: 20px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #eee;
 }
 
-.logo-container-wings img {
-  width: auto;
-  background-color: #fff;
-  max-height: 300px;
+h1 {text-align: center;
+    padding-left: 40px;
+    font-size: 2em;
+    color: #802823;
 }
 
-.wing-example {
-    background-color: #fff;
-    padding: 20px;
+/* Typography */
+h2 {text-align: left;
+    font-size: 1.5em;
+    color: #802823;
 }
 
 .tooltip-text {
-  font-family: Calibri, sans-serif;
-  background-color: #fff;
-  color: #555;
-  text-align: center;
-  padding: 5px;
-  border-radius: 15px;
+    line-height: 1.6;
 }
 
-/* Responsive design */
-@media (max-width: 768px) {
-    .container {
-        padding: 15px;
-    }
+/* Link Styles */
+a {
+    color: #802823;
+    text-decoration: none;
 }
+
+a:hover {
+    text-decoration: underline;
+}
+
+/* Image Styles */
+.image-container {
+    text-align: center;
+    margin: 20px 0;
+}
+
+.image-container img {
+    max-width: 100%;
+    height: auto;
+}
+
+.logo-container {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 20px 0;
+}
+
+.logo-container img {
+    max-width: 100px; /* Set a max-width for logos */
+    height: auto;
+}
+
+/* Contact Section */
+.contact-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.contact-info {
+    flex: 1;
+}
+
+.contact-logo {
+    flex: 1;
+    text-align: center;
+}
+
+.contact-logo img {
+    max-height: 120px;
+    height: auto;
+}
+
+/* Button Styles */
+.btn-submit {
+    background-color: #A27942;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    font-size: 1em;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+}
+
+.btn-submit:hover {
+    background-color: #326F32;
+}
+
+.btn-submit:disabled {
+    background-color: #696969;
+    cursor: not-allowed;
+}
+
+/* Form Styles */
+.input-file {
+    width: 100%;
+    margin-bottom: 20px;
+    font-size: 1em;}
+

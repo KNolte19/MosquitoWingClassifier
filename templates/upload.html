@@ -3,68 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Balrog - Mosquito Classifier</title>
+    <title>BALROG - Mosquito Classifier</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Open+Sans:wght@400;600&display=swap">
     <link rel="stylesheet" href="static/css/styles.css">
 </head>
 <body>
     <div class="container">
-        <h1>Balrog - Mosquito Classifier</h1>
-            <div class="tooltip-text">
-Welcome to our mosquito wing image classifier. This tool is designed for species identification based on uploaded images of mosquito wings. It's currently in a testing phase, and while our classification model is generally reliable, occasional errors may occur. Each result is accompanied by a confidence score to help assess the accuracy of the identification. Please review the accuracy of your results using the guidelines provided <a href="/display_iden_pdf">here</a>. You will receive a unique identifier for each submission for future reference.
+        
+            <div class="contact-logo">
+                <img src="{{ url_for('static', filename='images/balrog.png') }}" alt="Logo" class="header-logo">
             </div>
-        <h2>Upload Files</h2> 
-            <div class="tooltip-text">
-For optimal classification, please ensure that the images have a neutral background and clearly show a single, intact mosquito wing. Acceptable file formats include JPEG, PNG, and TIFF. You can upload up to 100 images per session. We highly recommend reviewing our <a href="/display_pdf">Image Capture Guidelines</a> for detailed instructions on preparing your mosquito wing specimens. By uploading images, you agree to grant us the rights to use them for research and educational purposes, confirming that you own or have the necessary rights for the images.
-            <div class="logo-container-wings">
-                    <a class="wing-example">
+        
+        <header>
+            <h1>BALROG - Mosquito Wing Classifier</h1>
+        </header>
+        
+        <main>
+            <section class="introduction">
+                <p class="tooltip-text"> Welcome to our mosquito wing image classifier. This tool is designed for species identification based on uploaded images of mosquito wings. It's currently in a testing phase, and while our classification model is generally reliable, occasional errors may occur. Each result is accompanied by a confidence score to help assess the accuracy of the identification. Please review the accuracy of your results using the guidelines provided <a href="/display_iden_pdf">here</a>. You will receive a unique identifier for each submission for future reference.
+                </p>
+            </section>
+            
+            <section class="upload-section">
+                <h2>Upload Files</h2> 
+                <p class="tooltip-text">For optimal classification, please ensure that the images have a neutral background and clearly show a single, intact mosquito wing. Acceptable file formats include JPEG, PNG, and TIFF. You can upload up to 100 images per session. We highly recommend reviewing our <a href="/display_pdf">Image Capture Guidelines</a> for detailed instructions on preparing your mosquito wing specimens. By uploading images, you agree to grant us the rights to use them for research and educational purposes, confirming that you own or have the necessary rights for the images.
+                </p>
+                <div class="image-container">
                     <img src="{{ url_for('static', filename='images/wing-example-1.png') }}" alt="Wing Image Example">
-                    </a>
                 </div> 
-            </div>
 
-        <form action="/upload_folder" method="POST" enctype="multipart/form-data">
-    <input type="file" name="file" multiple class="input-file" id="fileInput"/>
-    <button type="submit" class="btn-submit" id="uploadButton" disabled>Upload & Classifiy</button>
-        </form>
-
-<script>
-    // Get the file input and upload button elements
-    const fileInput = document.getElementById('fileInput');
-    const uploadButton = document.getElementById('uploadButton');
-
-    // Listen for changes on the file input
-    fileInput.addEventListener('change', function() {
-        // Check if files are selected
-        if (fileInput.files.length >  0) {
-            // Enable the upload button
-            uploadButton.disabled = false;
-        } else {
-            // Disable the upload button
-            uploadButton.disabled = true;
-        }
-    });
-</script>
-
-        
-<div class="logo-container">
-    <a href="https://www.bnitm.de" class="bernhard-nocht-logo">
-        <img src="{{ url_for('static', filename='images/bernhard-nocht-logo.png') }}" alt="Bernhard Nocht Institute Logo">
-    </a>
-    <a href="https://www.haw-hamburg.de" class="haw-hamburg-logo">
-        <img src="{{ url_for('static', filename='images/haw-hamburg-logo.png') }}" alt="HAW Logo">
-    </a>
-</div>
-        
-        
-    <h2>Contact Us</h2>
-    <div class="tooltip-text">
-        Bernhard-Nocht Institute for Tropical Medicine<br>
-        Bernhard-Nocht-Straße 74<br>
-        20359 Hamburg, Germany<br>
-        Contact us at: <a href="mailto:kristopher.nolte@bnitm.de" class="tooltip">kristopher.nolte@bnitm.de</a>
+                <form action="/upload_folder" method="POST" enctype="multipart/form-data">
+                    <input type="file" name="file" multiple class="input-file" id="fileInput"/>
+                    <button type="submit" class="btn-submit" id="uploadButton" disabled>Upload & Classify</button>
+                </form>
+            </section>
+            
+            <section class="contact">
+                <h2>Contact Us</h2>
+                <div class="contact-container">
+                    <div class="contact-info">
+                        <p class="tooltip-text">
+                            Bernhard-Nocht Institute for Tropical Medicine<br>
+                            Bernhard-Nocht-Straße 74<br>
+                            20359 Hamburg, Germany<br>
+                            Contact us at: <a href="mailto:kristopher.nolte@bnitm.de" class="tooltip">kristopher.nolte@bnitm.de</a>
+                        </p>
+                    </div>
+                    <div class="contact-logo">
+                        <img src="{{ url_for('static', filename='images/bernhard-nocht-logo.png') }}" alt="Bernhard Nocht Institute Logo">
+                    </div>
+                </div>
+            </section>
+        </main>
     </div>
-    </div>
-        
-</div>
+
+    <script>
+        // Get the file input and upload button elements
+        const fileInput = document.getElementById('fileInput');
+        const uploadButton = document.getElementById('uploadButton');
+
+        // Listen for changes on the file input
+        fileInput.addEventListener('change', function() {
+            // Check if files are selected
+            if (fileInput.files.length >  0) {
+                // Enable the upload button
+                uploadButton.disabled = false;
+            } else {
+                // Disable the upload button
+                uploadButton.disabled = true;
+            }
+        });
+    </script>
 </body>
 </html>
