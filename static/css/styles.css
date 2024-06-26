@@ -35,7 +35,6 @@ section {
 }
 
 h1 {text-align: center;
-    padding-left: 40px;
     font-size: 2em;
     color: #802823;
 }
@@ -106,7 +105,7 @@ a:hover {
 
 /* Button Styles */
 .btn-submit {
-    background-color: #A27942;
+    background-color: #802823;
     color: #fff;
     border: none;
     padding: 10px 20px;
@@ -117,7 +116,7 @@ a:hover {
 }
 
 .btn-submit:hover {
-    background-color: #326F32;
+    background-color: #A27942;
 }
 
 .btn-submit:disabled {
