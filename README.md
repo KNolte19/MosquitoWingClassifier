@@ -1,7 +1,7 @@
-# NAME_NEEDED - Mosquito Wing Species Classification
+# BALROG - Mosquito Wing Species Classification
 
 ## Overview
-NAME_NEEDED is a web-based app designed to assist in identifying mosquito wing species through image analysis. Users can upload images of mosquito wings and receive classifications for the species present. The service is built using Flask and Gunicorn, providing a user-friendly interface accessible via a web browser.
+BALROG* is a web-based app designed to assist in identifying mosquito wing species through image analysis. Users can upload images of mosquito wings and receive classifications for the species present. The service is built using Flask and Gunicorn, providing a user-friendly interface accessible via a web browser.
 
 Please note that this version is intended for testing and validation purposes. Although the classification model is reliable, there may be occasional misclassifications. For decisions requiring high accuracy, it is recommended to consult with  experts or utilize additional resources. Each prediction includes a confidence level metric to gauge the reliability of the classification. Upon submission, you will receive an identifier for accessing the prediction results or processed images.
 
@@ -32,6 +32,7 @@ Open your web browser and navigate to `http://localhost:5050`.
 - **Download Results:** Users can download the classification report or processed images using the provided identifier.
 
 ---
+*"His enemy halted again, facing him, and the shadow about it reached out like two vast wings."
 
 **Maintained by:** Kristopher Nolte
 
