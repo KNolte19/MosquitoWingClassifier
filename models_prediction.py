@@ -6,14 +6,14 @@ from joblib import dump, load
 
 # SET PARAMETERS
 IMG_SIZE = 300
-SPECIES_NAMES = ['modestus', 'cinereus', 'communis-punctor', 'rusticus',
-       'sticticus', 'vexans', 'claviger', 'other', 'richiardii',
-       'aegypti', 'albopictus', 'japonicus', 'koreicus', 'maculipennis',
-       'pipiens-torrentium', 'stephensi', 'morsitans', 'cantans',
-       'caspius', 'cataphylla', 'vishnui-group']
+SPECIES_NAMES = ['Cx. modestus', 'Ae. cinereus-geminus', 'Ae. communis-punctor', 'Ae. rusticus',
+       'Ae. sticticus', 'Ae. vexans', 'An. claviger', 'other', 'Cq. richiardii',
+       'Ae. aegypti', 'Ae. albopictus', 'Ae. japonicus', 'Ae. koreicus', 'An. maculipennis',
+       'Cx. pipiens-torrentium', 'An. stephensi', 'Cs. morsitans-fumipennis',
+       'Ae. annulipes-group', 'Ae. caspius', 'Ae. cataphylla', 'Cx. vishnui-group']
 
 # LOAD MODEL
-cnn_model = tf.keras.models.load_model("static/models/TUNING_1_2024-06-13-12-26.h5", compile=False)
+cnn_model = tf.keras.models.load_model("static/models/cnn.h5", compile=False)
 
 def getImage(file_path):
     # Load the raw data from the file as a string

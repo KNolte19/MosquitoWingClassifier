@@ -19,7 +19,8 @@ To deploy NAME_NEEDED on your local machine, you need to have Python and Docker 
 
 4. **Run Docker** \
 You have to change the path to the copy of this repo on your machine\
-`docker run -p 5050:5050 -v /path/to/repo/app/static/requests:/app/static/requests app`
+`docker run -p 5050:5050 -v /path/to/repo/app/static/requests:/app/static/requests app`\
+For instance: `docker run -p 5050:5050 -v /User/HansPeter/Documents/app/static/requests:/app/static/requests app`
 
 5. **Access the Application:**\
 Open your web browser and navigate to `http://localhost:5050`.
@@ -37,6 +38,6 @@ Open your web browser and navigate to `http://localhost:5050`.
 
 **Support:** Contact us at kristopher.nolte@bnitm.de for any inquiries or assistance.
 
-**Version:** v0.0.3
+**Version:** v0.1
 
-**Last Updated:** June  6,  2024
+**Last Updated:** June  26,  2024

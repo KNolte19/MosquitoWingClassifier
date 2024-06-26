@@ -85,6 +85,11 @@ def display_pdf():
     pdf_path = os.path.join(app.config['STATIC_FOLDER'], "guide", "ConVector_MosquitoWingRemovalGuide.pdf")
     return send_file(pdf_path, as_attachment=False)
 
+@app.route('/display_iden_pdf')
+def display_iden_pdf():
+    pdf_path = os.path.join(app.config['STATIC_FOLDER'], "guide", "Reverse-identification-key.pdf")
+    return send_file(pdf_path, as_attachment=False)
+
 @app.route('/download_csv', methods=['GET'])
 def download_csv():
     csv_file_path = os.path.join(session['request_path'], "predictions_{}.csv".format(session['identifier']))

@@ -5,10 +5,12 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    font-size: 18px;
 }
 
 h1, h2 {
     color: #802823;
+    font-size: 2em;
     margin-bottom: 30px;
     margin-top: 10px;
 }
