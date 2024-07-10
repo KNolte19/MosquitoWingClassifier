@@ -3,15 +3,14 @@
 <br>
  <head>
    <title>LandRoval Image Predictions - {{ request }}</title>
-   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.1/dist/css/bootstrap.min.css" rel="stylesheet">
-   <link href="/static/css/main.css" rel="stylesheet">
+   <link href="/static/css/prediction.css" rel="stylesheet">
  </head>
 
    <div class="container">
      <h1>Image Predictions - {{ request }}</h1>
-       <!-- bootstrap btn-group anschauen -->
         <a href="/download_csv" class="btn-submit">Download Table as CSV</a>
         <a href="/download_folder" class="btn-submit">Download Folder</a>
+        <a href="/" class="btn-submit_back">Upload New Images</a>
      <table class="table table-striped">
        <thead>
          <tr>
