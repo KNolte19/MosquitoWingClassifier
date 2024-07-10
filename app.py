@@ -1,13 +1,9 @@
 import os
-import pandas as pd
 import uuid
-import shutil
-import zipfile
 import tempfile
 
 from flask import Flask, render_template, request, session, send_file
 from werkzeug.utils import secure_filename
-from datetime import datetime
 from image_processing import process_image
 from models_prediction import get_system_prediction
 from rembg import new_session

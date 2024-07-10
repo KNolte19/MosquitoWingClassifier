@@ -2,7 +2,6 @@ import tensorflow as tf
 import numpy as np 
 import pandas as pd
 import os
-from joblib import dump, load
 
 # SET PARAMETERS
 IMG_SIZE = 300

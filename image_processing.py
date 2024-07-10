@@ -1,11 +1,8 @@
-import os 
 import numpy as np
 import tensorflow as tf
 import skimage as ski 
 from rembg import remove, new_session
-from tqdm import tqdm
 from PIL import Image
-import keras_cv
 bg_session = new_session()
 
 def process_image(file_path, bg_session):
