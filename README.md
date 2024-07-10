@@ -6,12 +6,14 @@ BALROG is a web-based app designed to assist in identifying mosquito wing specie
 Please note that this version is intended for testing and validation purposes. Although the classification model is reliable, there may be occasional misclassifications. For decisions requiring high accuracy, it is recommended to consult with  experts or utilize additional resources. Each prediction includes a confidence level metric to gauge the reliability of the classification. Upon submission, you will receive an identifier for accessing the prediction results or processed images.
 
 ## Getting Started
-To deploy NAME_NEEDED on your local machine, you need to have Python and Docker installed. Follow the steps below to set up the application:
+To deploy BALROG on your local machine, you need to have Python and Docker installed. Follow the steps below to set up the application:
 
 1. **Clone the Repository:**\
 `git clone https://github.com/KNolte19/MosquitoWingClassifier.git`
 
 2. **Download remBG weights to avoid unnecessary download**\
+BALROG utilises the RemBG library to remove the background, the model is relatively large and to avoid downloading it every time the application is restarted we advice downloading the model weights beforehand. 
+
 `https://github.com/danielgatis/rembg/releases/download/v0.0.0/u2net.onnx`
 
 3. **Build the Docker Image:**\
