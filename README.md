@@ -21,7 +21,7 @@ BALROG utilises the RemBG library to remove the background, the model is relativ
 4. **Run Docker** \
 You have to change the path to the copy of this repo on your machine\
 `docker run -p 5050:5050 -v /path/to/repo/app/static/requests:/app/static/requests app`\
-For instance:\ `docker run -p 5050:5050 -v /User/HansPeter/Documents/app/static/requests:/app/static/requests app`
+For instance: \ `docker run -p 5050:5050 -v /User/HansPeter/Documents/app/static/requests:/app/static/requests app`
 
 5. **Access the Application:**\
 Open your web browser and navigate to `http://localhost:5050`.
