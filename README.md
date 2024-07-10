@@ -12,8 +12,7 @@ To deploy BALROG on your local machine, you need to have Python and Docker insta
 `git clone https://github.com/KNolte19/MosquitoWingClassifier.git`
 
 2. **Download remBG weights to avoid unnecessary download**\
-BALROG utilises the RemBG library to remove the background, the model is relatively large and to avoid downloading it every time the application is restarted we advice downloading the model weights beforehand. 
-
+BALROG utilises the RemBG library to remove the background, the model is relatively large and to avoid downloading it every time the application is restarted we advice downloading the model weights beforehand.\ 
 `https://github.com/danielgatis/rembg/releases/download/v0.0.0/u2net.onnx`
 
 3. **Build the Docker Image:**\
@@ -22,7 +21,7 @@ BALROG utilises the RemBG library to remove the background, the model is relativ
 4. **Run Docker** \
 You have to change the path to the copy of this repo on your machine\
 `docker run -p 5050:5050 -v /path/to/repo/app/static/requests:/app/static/requests app`\
-For instance: `docker run -p 5050:5050 -v /User/HansPeter/Documents/app/static/requests:/app/static/requests app`
+For instance:\ `docker run -p 5050:5050 -v /User/HansPeter/Documents/app/static/requests:/app/static/requests app`
 
 5. **Access the Application:**\
 Open your web browser and navigate to `http://localhost:5050`.
