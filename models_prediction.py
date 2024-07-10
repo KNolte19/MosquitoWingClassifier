@@ -30,8 +30,13 @@ SPECIES_NAMES = [
 ]
 
 # LOAD MODEL
-cnn_model = tf.keras.models.load_model("static/models/cnn.h5", compile=False)
+cnn_model = tf.keras.models.load_model("static/models/cnn_appmodel.h5", compile=False)
 
+def logistic_function(x):
+    coefficients = 2.278
+    intercept = -7.722
+    z = np.dot(x, coefficients) + intercept
+    return 1 / (1 + np.exp(-z))
 
 def getImage(file_path):
     # Load the raw data from the file as a string
@@ -59,7 +64,7 @@ def get_cnn_prediction(dataset):
             for highest_score_index in highest_score_index_list
         ]
 
-        return np.asarray(highest_score_list), np.asarray(species_name_list)
+        return np.asarray(logistic_function(highest_score_list)), np.asarray(species_name_list)
 
     highest_score_list, species_name_list = parse_prediction(prediction_list, 1)
     sec_highest_score_list, sec_species_name_list = parse_prediction(prediction_list, 2)
