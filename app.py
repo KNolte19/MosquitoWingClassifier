@@ -16,7 +16,7 @@ app.config["REQUESTS"] = "static/requests"
 
 # HELPER FUNCTIONS
 ALLOWED_EXTENSIONS = {"png", "jpeg", "tif", "jpg"}
-app.secret_key = "Apfelkuchen"
+app.secret_key = os.environ.get("FLASK_SECRET_KEY", "Apfelkuchen")
 
 
 def allowed_file(filename):

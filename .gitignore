@@ -1,8 +1,8 @@
 *.ipynb_checkpoints
 *.DS_Store
 *.png
-__pycache__
+*__pycache__
 static/requests
-app_env
-.Rhistory
+*.Rhistory
 u2net.onnx
+*.ruff_cache
