@@ -1,40 +1,53 @@
 <!doctype html>
 <html>
-<br>
- <head>
-   <title>LandRoval Image Predictions - {{ request }}</title>
-   <link href="/static/css/prediction.css" rel="stylesheet">
- </head>
-
-   <div class="container">
-     <h1>Image Predictions - {{ request }}</h1>
-        <a href="/download_csv" class="btn-submit">Download Table as CSV</a>
-        <a href="/download_folder" class="btn-submit">Download Folder</a>
-        <a href="/" class="btn-submit_back">Upload New Images</a>
-     <table class="table table-striped">
-       <thead>
-         <tr>
-           <th>Image Name</th>
-           <th>Image</th>
-           <th>Species Prediction</th>
-           <th>Species Confidence</th>
-           <th>2nd Species</th>
-           <th>2nd Species Confidence</th>
-         </tr>
-       </thead>
-       <tbody>
-         {% for prediction in predictions %}
-           <tr>
-             <td>{{ prediction.image_name }}</td>
-             <td><img src="{{ prediction.image_path }}" alt="Image"></td>
-             <td>{{ prediction.highest_species_prediction }}</td>
-             <td>{{ prediction.highest_species_confidence }}</td>
-             <td>{{ prediction.second_highest_species_prediction }}</td>
-             <td>{{ prediction.second_highest_species_confidence }}</td>
-           </tr>
-         {% endfor %}
-       </tbody>
-     </table>
-   </div>
- </body>
+<head>
+  <title>LandRoval Image Predictions - {{ request }}</title>
+  <link href="/static/css/prediction.css" rel="stylesheet">
+  <style>
+    .low-confidence {
+      color: #802823;
+    }
+    .medium-confidence {
+      color: #A27942;
+    }
+    .high-confidence {
+      color: #326F32;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Image Predictions - {{ request }}</h1>
+    <a href="/download_csv" class="btn-submit">Download Table as CSV</a>
+    <a href="/download_folder" class="btn-submit">Download Folder</a>
+    <a href="/" class="btn-submit_back">Upload New Images</a>
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>Image Name</th>
+          <th>Image</th>
+          <th>Species Prediction</th>
+          <th>Species Confidence</th>
+          <th>2nd Species</th>
+          <th>2nd Species Confidence</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for prediction in predictions %}
+          <tr>
+            <td>{{ prediction.image_name }}</td>
+            <td><img src="{{ prediction.image_path }}" alt="Image"></td>
+            <td class="{% if prediction.highest_species_confidence < 0.5 %}low-confidence{% elif prediction.highest_species_confidence < 0.8 %}medium-confidence{% else %}high-confidence{% endif %}">
+              {{ prediction.highest_species_prediction }}
+            </td>
+            <td class="{% if prediction.highest_species_confidence < 0.5 %}low-confidence{% elif prediction.highest_species_confidence < 0.8 %}medium-confidence{% else %}high-confidence{% endif %}">{{ prediction.highest_species_confidence }}</td>
+              
+            <td class="{% if prediction.second_highest_species_confidence < 0.5 %}low-confidence{% elif prediction.second_highest_species_confidence < 0.8 %}medium-confidence{% else %}high-confidence{% endif %}">{{ prediction.second_highest_species_prediction }}</td>
+            <td class="{% if prediction.second_highest_species_confidence < 0.5 %}low-confidence{% elif prediction.second_highest_species_confidence < 0.8 %}medium-confidence{% else %}high-confidence{% endif %}">{{ prediction.second_highest_species_confidence }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</body>
 </html>
