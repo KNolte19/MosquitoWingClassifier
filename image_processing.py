@@ -4,11 +4,23 @@ import skimage as ski
 from rembg import remove, new_session
 from PIL import Image
 
+# Initialize a new session for background removal
 bg_session = new_session()
 
 
-def process_image(file_path, bg_session):
+def process_image(file_stream, bg_session):
+    """Process an image by removing the background, aligning, enhancing contrast, and resizing."""
+
     def remove_bg_and_rotate(image):
+        """
+        Remove the background from the image and rotate it to align with the main axis.
+
+        Args:
+            image (PIL.Image): Input image to process.
+
+        Returns:
+            tuple: A tuple containing the mask and the cropped, aligned image.
+        """
         # Remove Background
         image_rembg = remove(image, bgcolor=(0, 0, 0, -1), session=bg_session)
         mask = np.asarray(image_rembg)[:, :, 3] > 10
@@ -24,7 +36,7 @@ def process_image(file_path, bg_session):
             + 90
         )
         if angle < -90:
-            angle = angle + 180
+            angle += 180
 
         # Rotate image and mask
         rotated_image = np.asarray(Image.fromarray(image_masked).rotate(angle))
@@ -38,50 +50,67 @@ def process_image(file_path, bg_session):
 
         # Crop the image to the bounding box
         image_cropped = rotated_image[rmin:rmax, cmin:cmax]
-        image_cropped = image_cropped[:, :, :3]
+        image_cropped = image_cropped[:, :, :3]  # Keep only RGB channels
         mask_cropped = rotated_mask[rmin:rmax, cmin:cmax]
 
         return mask_cropped, image_cropped
 
     def process_image_to_grey(image):
-        # make greyscale
-        image = ski.color.rgb2gray(image)
-        image = ski.util.img_as_ubyte(np.asarray(image))
-        return image
+        """
+        Convert the image to greyscale.
 
-    def process_image(mask, image):
-        # reduce noise
+        Args:
+            image (numpy.ndarray): Input RGB image.
+
+        Returns:
+            numpy.ndarray: Greyscale image.
+        """
+        image = ski.color.rgb2gray(image)
+        return ski.util.img_as_ubyte(np.asarray(image))
+
+    def enhance_contrast_and_resize(mask, image):
+        """
+        Enhance contrast using CLAHE and resize the image.
+
+        Args:
+            mask (numpy.ndarray): Binary mask of the image.
+            image (numpy.ndarray): Greyscale image.
+
+        Returns:
+            numpy.ndarray: Enhanced and resized image.
+        """
+        # Reduce noise
         image = ski.filters.rank.median(image, ski.morphology.disk(3))
-        # apply CLAHE
+
+        # Apply CLAHE
         equalized_img = np.asarray(
             ski.exposure.equalize_adapthist(image, clip_limit=0.6, nbins=48)
         )
-
         equalized_img = ski.filters.rank.median(
             ski.util.img_as_ubyte(equalized_img), ski.morphology.disk(3)
         )
 
-        # set background to 0
+        # Set background to 0
         equalized_img[~mask] = 0
-        # resize image and crop it to size
+
+        # Resize image and crop it to size
         resized_img = tf.image.resize_with_pad(
-            np.stack((equalized_img,) * 3, axis=-1),
-            300,
-            300,
+            np.stack((equalized_img,) * 3, axis=-1), 300, 300
         ).numpy()[:, :, 0]
+
         return resized_img
 
-    # open image
-    image = Image.open(file_path)
+    # Open image
+    image = Image.open(file_stream)
 
-    # remove background and align wing
+    # Remove background and align wing
     mask, image = remove_bg_and_rotate(image)
 
-    # transform image to greyscale
+    # Transform image to greyscale
     image = process_image_to_grey(image / 255)
 
-    # apply CLAHE for contrast improvement
-    image = process_image(mask, image)
+    # Enhance contrast and resize image
+    image = enhance_contrast_and_resize(mask, image)
     image = Image.fromarray(np.uint8(image))
 
     return image

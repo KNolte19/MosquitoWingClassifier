@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import os
 
-# SET PARAMETERS
+# Set image size and species names
 IMG_SIZE = 300
 SPECIES_NAMES = [
     "Cx. modestus",
@@ -29,80 +29,114 @@ SPECIES_NAMES = [
     "Cx. vishnui-group",
 ]
 
-# LOAD MODEL
+# Load pre-trained model
 cnn_model = tf.keras.models.load_model("static/models/cnn_appmodel.h5", compile=False)
 
+
 def logistic_function(x):
+    """
+    Logistic function for converting scores to probabilities.
+
+    Args:
+        x (float): Input score.
+
+    Returns:
+        float: Probability value.
+    """
     coefficients = 2.278
     intercept = -7.722
     z = np.dot(x, coefficients) + intercept
     return 1 / (1 + np.exp(-z))
 
-def getImage(file_path):
-    # Load the raw data from the file as a string
+
+def load_image(file_path):
+    """
+    Load and preprocess an image from the given file path.
+
+    Args:
+        file_path (str): Path to the image file.
+
+    Returns:
+        tensor: Preprocessed image tensor.
+    """
     image = tf.io.read_file(file_path)
-    # Convert the compressed string to a 3D uint8 tensor
     image = tf.io.decode_png(image, channels=3)
     image = tf.image.resize(image, [IMG_SIZE, IMG_SIZE])
     return image
 
 
 def get_cnn_prediction(dataset):
-    # Let model predict
+    """
+    Get CNN model predictions for the given dataset.
+
+    Args:
+        dataset (tf.data.Dataset): Dataset containing images.
+
+    Returns:
+        tuple: Predictions for highest and second highest scores and species names.
+    """
     prediction_list = cnn_model.predict(dataset, verbose=0)
 
-    def parse_prediction(prediction_list, rank):
-        highest_score_list = [
-            np.sort(prediction)[-rank] for prediction in prediction_list
-        ]
-        highest_score_index_list = [
-            np.where(prediction_list[i] == highest_score)[0][0]
-            for i, highest_score in enumerate(highest_score_list)
-        ]
-        species_name_list = [
-            SPECIES_NAMES[highest_score_index]
-            for highest_score_index in highest_score_index_list
-        ]
+    def parse_prediction(predictions, rank):
+        """
+        Parse the prediction list to get species names and scores.
 
-        return np.asarray(logistic_function(highest_score_list)), np.asarray(species_name_list)
+        Args:
+            predictions (list): List of predictions.
+            rank (int): Rank of the prediction to parse (1 for highest, 2 for second highest).
 
-    highest_score_list, species_name_list = parse_prediction(prediction_list, 1)
-    sec_highest_score_list, sec_species_name_list = parse_prediction(prediction_list, 2)
+        Returns:
+            tuple: Arrays of scores and species names.
+        """
+        highest_scores = [np.sort(prediction)[-rank] for prediction in predictions]
+        highest_indices = [
+            np.where(prediction == score)[0][0]
+            for prediction, score in zip(predictions, highest_scores)
+        ]
+        species_names = [SPECIES_NAMES[idx] for idx in highest_indices]
+
+        return np.asarray(logistic_function(highest_scores)), np.asarray(species_names)
+
+    highest_scores, highest_species = parse_prediction(prediction_list, 1)
+    second_highest_scores, second_highest_species = parse_prediction(prediction_list, 2)
 
     return (
-        highest_score_list,
-        species_name_list,
-        sec_highest_score_list,
-        sec_species_name_list,
+        highest_scores,
+        highest_species,
+        second_highest_scores,
+        second_highest_species,
     )
 
 
 def get_system_prediction(folder_path):
-    # Load Images
-    folder_path = folder_path + "/*.png"
+    """
+    Get system predictions for all images in the specified folder.
+
+    Args:
+        folder_path (str): Path to the folder containing images.
+
+    Returns:
+        DataFrame: DataFrame containing predictions and confidence scores.
+    """
+    folder_path = os.path.join(folder_path, "*.png")
     file_list = tf.data.Dataset.list_files(folder_path, shuffle=False)
-    dataset = file_list.map(getImage).batch(1)
+    dataset = file_list.map(load_image).batch(1)
 
-    # Get CNN Predictions
-    (
-        highest_score_list,
-        species_name_list,
-        sec_highest_score_list,
-        sec_species_name_list,
-    ) = get_cnn_prediction(dataset)
+    highest_scores, highest_species, second_highest_scores, second_highest_species = (
+        get_cnn_prediction(dataset)
+    )
 
-    # Write Dataframe
     df = pd.DataFrame(
         {
             "image_path": [f.numpy().decode("utf-8") for f in file_list],
-            "highest_species_prediction": species_name_list,
-            "highest_species_confidence": highest_score_list,
-            "second_highest_species_prediction": sec_species_name_list,
-            "second_highest_species_confidence": sec_highest_score_list,
+            "highest_species_prediction": highest_species,
+            "highest_species_confidence": highest_scores,
+            "second_highest_species_prediction": second_highest_species,
+            "second_highest_species_confidence": second_highest_scores,
         }
     )
 
-    df["image_name"] = [name.split(os.sep)[-1] for name in df["image_path"]]
+    df["image_name"] = df["image_path"].apply(lambda x: os.path.basename(x))
 
     df = df.astype(
         {
@@ -116,7 +150,10 @@ def get_system_prediction(folder_path):
     )
 
     df = df.round(
-        {"highest_species_confidence": 2, "second_highest_species_confidence": 2}
+        {
+            "highest_species_confidence": 2,
+            "second_highest_species_confidence": 2,
+        }
     )
 
     return df

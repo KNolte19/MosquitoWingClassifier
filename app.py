@@ -9,35 +9,37 @@ from models_prediction import get_system_prediction
 from rembg import new_session
 from zipfile import ZipFile
 
-# CONFIGURATIONS
+# Configurations
 app = Flask(__name__)
 app.config["STATIC_FOLDER"] = "static"
 app.config["REQUESTS"] = "static/requests"
-
-# HELPER FUNCTIONS
-ALLOWED_EXTENSIONS = {"png", "jpeg", "tif", "jpg"}
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "Apfelkuchen")
+
+# Allowed file extensions for uploads
+ALLOWED_EXTENSIONS = {"png", "jpeg", "tif", "jpg"}
 
 
 def allowed_file(filename):
-    # checks if filename is allowed
+    """Check if the filename has an allowed extension."""
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
 def get_identifier():
-    # get radom identifier for each request
+    """Generate a random identifier for each request."""
     return str(uuid.uuid4())[:8]
 
 
-# SERVER
 @app.route("/")
 def start():
+    """Render the upload page."""
     return render_template("upload.html")
 
 
 @app.route("/upload_folder", methods=["POST"])
 def upload_folder():
-    # CREATES NEW DIRECTORY FOR THE REQUEST
+    """Handle the folder upload, process images, and save results."""
+
+    # Create a new directory for the request
     session["identifier"] = get_identifier()
     session["request_path"] = os.path.join(
         app.config["REQUESTS"], "request_{}".format(session["identifier"])
@@ -49,17 +51,16 @@ def upload_folder():
     os.mkdir(session["request_path"])
     os.mkdir(session["request_path_processed"])
 
-    # CREATES NEW SESSION FOR REMBG
+    # Create a new session for REMBG
     bgremove_session = new_session()
 
-    # CHECK IF FILES ARE VALID
+    # Check and process each file
     files = request.files.getlist("file")
     for file in files:
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
-            # PROCESS IMAGES DIRECTLY FROM MEMORY, SKIP SAVING RAW FILES
             try:
-                # Assume `process_image` can take a file stream directly:
+                # Process images directly from memory
                 processed_img = process_image(file.stream, bgremove_session)
                 processed_img_path = os.path.join(
                     session["request_path_processed"], filename.split(".")[0] + ".png"
@@ -70,7 +71,7 @@ def upload_folder():
         else:
             return "{} was not uploaded, operation stopped".format(file.filename)
 
-    # CONTINUE AS PREVIOUSLY FOR PREDICTION AND RESPONSE HANDLING
+    # Generate predictions
     prediction_df = get_system_prediction(
         os.path.join(session["request_path_processed"])
     )
@@ -98,6 +99,7 @@ def upload_folder():
 
 @app.route("/display_pdf")
 def display_pdf():
+    """Display the mosquito wing removal guide PDF."""
     pdf_path = os.path.join(
         app.config["STATIC_FOLDER"], "guide", "ConVector_MosquitoWingRemovalGuide.pdf"
     )
@@ -106,6 +108,7 @@ def display_pdf():
 
 @app.route("/display_iden_pdf")
 def display_iden_pdf():
+    """Display the reverse identification key PDF."""
     pdf_path = os.path.join(
         app.config["STATIC_FOLDER"], "guide", "Reverse-identification-key.pdf"
     )
@@ -114,6 +117,7 @@ def display_iden_pdf():
 
 @app.route("/download_csv", methods=["GET"])
 def download_csv():
+    """Download the CSV file containing predictions."""
     csv_file_path = os.path.join(
         session["request_path"], "predictions_{}.csv".format(session["identifier"])
     )
@@ -122,6 +126,7 @@ def download_csv():
 
 @app.route("/download_folder", methods=["GET"])
 def download_folder():
+    """Download the entire request folder as a zip file."""
     folder_path = session["request_path"]
     zip_file_name = "request_{}.zip".format(session["identifier"])
     zip_path = os.path.join(tempfile.gettempdir(), zip_file_name)
