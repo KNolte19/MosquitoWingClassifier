@@ -8,7 +8,7 @@ import keras_cv
 # Initialize a new session for background removal
 bg_session = new_session()
 
-augmentation_model = tf.keras.Sequential([tf.keras.layers.RandomBrightness((-.8, .1)),
+augmentation_model = tf.keras.Sequential([tf.keras.layers.RandomBrightness((-.4, .2), value_range=(0, 255)),
                                           tf.keras.layers.GaussianNoise(.25),
                                           tf.keras.layers.GaussianDropout(.25),
                                           keras_cv.layers.RandomSaturation((0,1)),
@@ -116,7 +116,7 @@ def process_image(file_stream, bg_session):
     # Remove background and align wing
     mask, image = remove_bg_and_rotate(image)
 
-    for i in range(4):
+    for i in range(6):
         # Dont augment the first image
         if i == 0:
             image_aug = np.asarray(image)
@@ -133,8 +133,10 @@ def process_image(file_stream, bg_session):
         if i%2 == 0:
             clahe_image = np.fliplr(clahe_image)
 
-        unaugment_image = Image.fromarray(np.uint8(clahe_image))
-        
+        # Save the first image for preview
+        if i == 0:
+            unaugment_image = Image.fromarray(np.uint8(clahe_image))
+
         image_ls.append(clahe_image)
 
     return image_ls, unaugment_image
