@@ -3,9 +3,18 @@ import tensorflow as tf
 import skimage as ski
 from rembg import remove, new_session
 from PIL import Image
+import keras_cv
 
 # Initialize a new session for background removal
 bg_session = new_session()
+
+augmentation_model = tf.keras.Sequential([tf.keras.layers.RandomBrightness((-.8, .1)),
+                                          tf.keras.layers.GaussianNoise(.25),
+                                          tf.keras.layers.GaussianDropout(.25),
+                                          keras_cv.layers.RandomSaturation((0,1)),
+                                          keras_cv.layers.RandomHue(.5, value_range=(0, 255)),
+                                          keras_cv.layers.RandomColorDegeneration(.5),
+                                          keras_cv.layers.RandomSharpness(.5, value_range=(0, 255)),])
 
 
 def process_image(file_stream, bg_session):
@@ -96,21 +105,36 @@ def process_image(file_stream, bg_session):
         # Resize image and crop it to size
         resized_img = tf.image.resize_with_pad(
             np.stack((equalized_img,) * 3, axis=-1), 300, 300
-        ).numpy()[:, :, 0]
+        ).numpy()#[:, :, 0]
 
         return resized_img
 
     # Open image
+    image_ls = []
     image = Image.open(file_stream)
 
     # Remove background and align wing
     mask, image = remove_bg_and_rotate(image)
 
-    # Transform image to greyscale
-    image = process_image_to_grey(image / 255)
+    for i in range(4):
+        # Dont augment the first image
+        if i == 0:
+            image_aug = np.asarray(image)
+        else:
+            image_aug = augmentation_model(np.asarray(image)).numpy()
 
-    # Enhance contrast and resize image
-    image = enhance_contrast_and_resize(mask, image)
-    image = Image.fromarray(np.uint8(image))
+        # Transform image to greyscale
+        grey_image = process_image_to_grey(image_aug / 255)
 
-    return image
+        # Enhance contrast and resize image
+        clahe_image = enhance_contrast_and_resize(mask, grey_image)
+
+        #Flip every second image
+        if i%2 == 0:
+            clahe_image = np.fliplr(clahe_image)
+
+        unaugment_image = Image.fromarray(np.uint8(clahe_image))
+        
+        image_ls.append(clahe_image)
+
+    return image_ls, unaugment_image

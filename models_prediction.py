@@ -65,7 +65,7 @@ def load_image(file_path):
     return image
 
 
-def get_cnn_prediction(dataset):
+def get_cnn_prediction(dataset, batch_size):
     """
     Get CNN model predictions for the given dataset.
 
@@ -75,7 +75,14 @@ def get_cnn_prediction(dataset):
     Returns:
         tuple: Predictions for highest and second highest scores and species names.
     """
+    # get prediction from model
     prediction_list = cnn_model.predict(dataset, verbose=0)
+    # reshape prediction list to same images augmented differently
+    stacked_prediction_list = np.asarray(prediction_list).reshape(dataset.__len__().numpy(), # Number of image batches
+                                                                  batch_size, # Number of augmentations
+                                                                  len(SPECIES_NAMES)) # Number of species
+    # get average prediction for each image
+    average_prediction_list = np.mean(stacked_prediction_list, axis=1)
 
     def parse_prediction(predictions, rank):
         """
@@ -97,8 +104,8 @@ def get_cnn_prediction(dataset):
 
         return np.asarray(logistic_function(highest_scores)), np.asarray(species_names)
 
-    highest_scores, highest_species = parse_prediction(prediction_list, 1)
-    second_highest_scores, second_highest_species = parse_prediction(prediction_list, 2)
+    highest_scores, highest_species = parse_prediction(average_prediction_list, 1)
+    second_highest_scores, second_highest_species = parse_prediction(average_prediction_list, 2)
 
     return (
         highest_scores,
@@ -108,7 +115,8 @@ def get_cnn_prediction(dataset):
     )
 
 
-def get_system_prediction(folder_path):
+#ef get_system_prediction(folder_path):
+def get_system_prediction(folder_path, dataset, batch_size):
     """
     Get system predictions for all images in the specified folder.
 
@@ -118,12 +126,11 @@ def get_system_prediction(folder_path):
     Returns:
         DataFrame: DataFrame containing predictions and confidence scores.
     """
-    folder_path = os.path.join(folder_path, "*.png")
-    file_list = tf.data.Dataset.list_files(folder_path, shuffle=False)
-    dataset = file_list.map(load_image).batch(1)
+
+    file_list = tf.data.Dataset.list_files(os.path.join(folder_path, "*.png"), shuffle=False)
 
     highest_scores, highest_species, second_highest_scores, second_highest_species = (
-        get_cnn_prediction(dataset)
+        get_cnn_prediction(dataset, batch_size)
     )
 
     df = pd.DataFrame(
