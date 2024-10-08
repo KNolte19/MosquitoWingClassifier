@@ -5,11 +5,13 @@ body {
     padding: 0;
     background-color: #f4f4f4;
     color: #333;
-    font-size: 18px; /* Default font size for body text */
+    font-size: 18px;
 }
 
+/* Responsive container */
 .container {
-    width: 50%;
+    width: 90%;
+    max-width: 800px; /* Limits max width for larger screens */
     margin: 0 auto;
     padding: 20px;
     background-color: #fff;
@@ -18,29 +20,27 @@ body {
 
 /* Section Styles */
 main {
-    padding-left: 20px;
-    padding-right: 20px;
-    padding-bottom: 20px;
+    padding: 0 10px;
 }
 
 section {
-    margin-bottom: 0px;
+    margin-bottom: 0;
+    padding: 20px;
 }
 
 .introduction, .upload-section, .contact {
-    padding-left: 20px;
-    padding-right: 20px;
-    padding-bottom: 20px;
+    padding: 20px;
     border-bottom: 2px solid #eee;
 }
 
-h1 {text-align: center;
+h1 {
+    text-align: center;
     font-size: 2em;
     color: #802823;
 }
 
-/* Typography */
-h2 {text-align: left;
+h2 {
+    text-align: left;
     font-size: 1.5em;
     color: #802823;
 }
@@ -68,39 +68,19 @@ a:hover {
 .image-container img {
     max-width: 100%;
     height: auto;
-}
-
-.logo-container {
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-    padding: 20px 0;
-}
-
-.logo-container img {
-    max-width: 100px; /* Set a max-width for logos */
-    height: auto;
-}
+    text-align: center;}
 
 /* Contact Section */
 .contact-container {
     display: flex;
+    flex-direction: column; /* Stack on small screens */
     align-items: center;
-    justify-content: space-between;
-}
-
-.contact-info {
-    flex: 1;
-}
-
-.contact-logo {
-    flex: 1;
     text-align: center;
 }
 
-.contact-logo img {
-    max-height: 120px;
-    height: auto;
+.contact-info, .contact-logo {
+    margin-bottom: 20px;
+    text-align: center;
 }
 
 /* Button Styles */
@@ -128,5 +108,48 @@ a:hover {
 .input-file {
     width: 100%;
     margin-bottom: 20px;
-    font-size: 1em;}
+    font-size: 1em;
+}
 
+/* Image Styles */
+.image-container img {
+    max-width: 80%; /* Reduced max width for smaller images */
+    height: auto;
+    text-align: center;
+}
+
+/* Contact logo image */
+.contact-logo img {
+    max-width: 200px; /* Sets a smaller max width for the contact logo */
+    height: auto;
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+    .container {
+        width: 95%;
+        padding: 15px;
+    }
+
+    h1 {
+        font-size: 1.5em;
+    }
+
+    h2 {
+        font-size: 1.25em;
+    }
+
+    .contact-container {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .contact-info, .contact-logo {
+        margin-bottom: 10px;
+    }
+
+    .btn-submit {
+        font-size: 0.9em;
+        padding: 8px 16px;
+    }
+}
