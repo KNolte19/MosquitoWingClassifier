@@ -1,37 +1,36 @@
-import tensorflow as tf
+import skimage as ski
 import numpy as np
 import pandas as pd
 import os
+import torch
 
 # Set image size and species names
-IMG_SIZE = 300
 SPECIES_NAMES = [
-    "Cx. modestus",
-    "Ae. cinereus-geminus",
-    "Ae. communis-punctor",
-    "Ae. rusticus",
-    "Ae. sticticus",
-    "Ae. vexans",
-    "An. claviger",
-    "other",
-    "Cq. richiardii",
-    "Ae. aegypti",
-    "Ae. albopictus",
-    "Ae. japonicus",
-    "Ae. koreicus",
-    "An. maculipennis",
-    "Cx. pipiens-torrentium",
-    "An. stephensi",
-    "Cs. morsitans-fumipennis",
-    "Ae. annulipes-group",
-    "Ae. caspius",
-    "Ae. cataphylla",
-    "Cx. vishnui-group",
+    'Ae. aegypti',
+    'Ae. albopictus',
+    'Ae. annulipes-group',
+    'Ae. caspius',
+    'Ae. cataphylla',
+    'Ae. cinereus-geminus pair',
+    'An. claviger-petragani group s.l.',
+    'Ae. communis-punctor pair',
+    'Ae. japonicus',
+    'Ae. koreicus',
+    'An. maculipennis s.l.',
+    'Cx. modestus',
+    'Cs. morsitans-fumipennis pair',
+    'other',
+    'Cx. torrentium-pipiens s.l. pair',
+    'Cq. richiardii',
+    'Ae. rusticus',
+    'An. stephensi',
+    'Ae. sticticus',
+    'Ae. vexans',
+    'Cx. vishnui-group',
 ]
 
 # Load pre-trained model
-cnn_model = tf.keras.models.load_model("static/models/cnn_appmodel.h5", compile=False)
-
+cnn_model = torch.load(os.path.join("static", "models", "model_1_flowing-music-18.pt"), map_location=torch.device('cpu'))
 
 def logistic_function(x):
     """
@@ -43,29 +42,24 @@ def logistic_function(x):
     Returns:
         float: Probability value.
     """
-    coefficients = 2.278
-    intercept = -7.722
+    coefficients = 2.52
+    intercept = -7.85
     z = np.dot(x, coefficients) + intercept
     return 1 / (1 + np.exp(-z))
 
+def prediction_loop(dataloader):
+    predictions = []
+    with torch.no_grad():
+        for batch, (X) in enumerate(dataloader):
+                
+                # Compute prediction
+                pred = cnn_model(torch.tensor(X[0]).unsqueeze(0))
 
-def load_image(file_path):
-    """
-    Load and preprocess an image from the given file path.
+                predictions.append(pred.cpu().detach().numpy())
 
-    Args:
-        file_path (str): Path to the image file.
+    return np.concatenate(predictions)
 
-    Returns:
-        tensor: Preprocessed image tensor.
-    """
-    image = tf.io.read_file(file_path)
-    image = tf.io.decode_png(image, channels=3)
-    image = tf.image.resize(image, [IMG_SIZE, IMG_SIZE])
-    return image
-
-
-def get_cnn_prediction(dataset, batch_size):
+def get_cnn_prediction(file_list):
     """
     Get CNN model predictions for the given dataset.
 
@@ -75,14 +69,13 @@ def get_cnn_prediction(dataset, batch_size):
     Returns:
         tuple: Predictions for highest and second highest scores and species names.
     """
+
+    # Generate pytorch dataset
+    dataset = torch.utils.data.TensorDataset(torch.stack(file_list)) 
+    dataloader = torch.utils.data.DataLoader(dataset, batch_size=None, shuffle=False) #, num_workers=8
+
     # get prediction from model
-    prediction_list = cnn_model.predict(dataset, verbose=0)
-    # reshape prediction list to same images augmented differently
-    stacked_prediction_list = np.asarray(prediction_list).reshape(dataset.__len__().numpy(), # Number of image batches
-                                                                  batch_size, # Number of augmentations
-                                                                  len(SPECIES_NAMES)) # Number of species
-    # get average prediction for each image
-    average_prediction_list = np.mean(stacked_prediction_list, axis=1)
+    prediction_list = prediction_loop(dataloader)
 
     def parse_prediction(predictions, rank):
         """
@@ -104,8 +97,8 @@ def get_cnn_prediction(dataset, batch_size):
 
         return np.asarray(logistic_function(highest_scores)), np.asarray(species_names)
 
-    highest_scores, highest_species = parse_prediction(average_prediction_list, 1)
-    second_highest_scores, second_highest_species = parse_prediction(average_prediction_list, 2)
+    highest_scores, highest_species = parse_prediction(prediction_list, 1)
+    second_highest_scores, second_highest_species = parse_prediction(prediction_list, 2)
 
     return (
         highest_scores,
@@ -114,9 +107,8 @@ def get_cnn_prediction(dataset, batch_size):
         second_highest_species,
     )
 
-
 #ef get_system_prediction(folder_path):
-def get_system_prediction(folder_path, dataset, batch_size):
+def get_system_prediction(folder_path, file_list, file_name_list):
     """
     Get system predictions for all images in the specified folder.
 
@@ -127,15 +119,12 @@ def get_system_prediction(folder_path, dataset, batch_size):
         DataFrame: DataFrame containing predictions and confidence scores.
     """
 
-    file_list = tf.data.Dataset.list_files(os.path.join(folder_path, "*.png"), shuffle=False)
-
-    highest_scores, highest_species, second_highest_scores, second_highest_species = (
-        get_cnn_prediction(dataset, batch_size)
-    )
+    file_name_list = [os.path.join(folder_path, x) for x in file_name_list]
+    highest_scores, highest_species, second_highest_scores, second_highest_species = get_cnn_prediction(file_list)
 
     df = pd.DataFrame(
         {
-            "image_path": [f.numpy().decode("utf-8") for f in file_list],
+            "image_path": file_name_list,
             "highest_species_prediction": highest_species,
             "highest_species_confidence": highest_scores,
             "second_highest_species_prediction": second_highest_species,

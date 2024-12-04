@@ -2,14 +2,15 @@ import os
 import uuid
 import tempfile
 
-import tensorflow as tf
-
 from flask import Flask, render_template, request, session, send_file
 from werkzeug.utils import secure_filename
 from image_processing import process_image
 from models_prediction import get_system_prediction
 from rembg import new_session
 from zipfile import ZipFile
+
+# Create a new session for REMBG
+bgremove_session = new_session()
 
 # Configurations
 app = Flask(__name__)
@@ -53,25 +54,21 @@ def upload_folder():
     os.mkdir(session["request_path"])
     os.mkdir(session["request_path_processed"])
 
-    # Create a new session for REMBG
-    bgremove_session = new_session()
-
     # Check and process each file
     files = request.files.getlist("file")
-    file_list = []
+    file_list, file_name_list = [], []
     for file in files:
         if file and allowed_file(file.filename):
             filename = secure_filename(file.filename)
             try:
                 # Process images directly from memory
-                processed_img_ls, unaugment_image = process_image(file.stream, bgremove_session)
-
-                # Save the unaugmented and processed image for download
-                processed_img_path = os.path.join(session["request_path_processed"], filename.split(".")[0] + ".png")
-                unaugment_image.save(processed_img_path)
+                processed_img_name = filename.split(".")[0] + ".png"
+                processed_img_path = os.path.join(session["request_path_processed"], processed_img_name)
+                processed_img = process_image(file.stream, processed_img_path, bgremove_session)
 
                 # Append processed image list to tensor dataset
-                file_list.extend(processed_img_ls)
+                file_list.append(processed_img)
+                file_name_list.append(processed_img_name)
 
             except Exception as e:
                return f"Error processing file: {str(e)}", 500
@@ -79,12 +76,8 @@ def upload_folder():
         else:
             return "{} was not uploaded, operation stopped".format(file.filename)
 
-    # Generate tensorflow dataset
-    batch_size = len(processed_img_ls)
-    dataset = tf.data.Dataset.from_tensor_slices(file_list).batch(batch_size)
-
     # Get system predictions
-    prediction_df = get_system_prediction(os.path.join(session["request_path_processed"]), dataset, batch_size)
+    prediction_df = get_system_prediction(session["request_path_processed"], file_list, file_name_list)
 
     # Save the predictions to a CSV file
     predictiondf_path = os.path.join(
