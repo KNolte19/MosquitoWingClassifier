@@ -4,7 +4,7 @@ import tempfile
 
 from flask import Flask, render_template, request, session, send_file
 from werkzeug.utils import secure_filename
-from image_processing import process_image
+from image_processing import ImageGenerator
 from models_prediction import get_system_prediction
 from rembg import new_session
 from zipfile import ZipFile
@@ -20,7 +20,7 @@ app.secret_key = os.environ.get("FLASK_SECRET_KEY", "Apfelkuchen")
 
 # Allowed file extensions for uploads
 ALLOWED_EXTENSIONS = {"png", "jpeg", "tif", "jpg", "tiff"}
-
+NUM_AUG = 2
 
 def allowed_file(filename):
     """Check if the filename has an allowed extension."""
@@ -56,28 +56,16 @@ def upload_folder():
 
     # Check and process each file
     files = request.files.getlist("file")
-    file_list, file_name_list = [], []
-    for file in files:
-        if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            try:
-                # Process images directly from memory
-                processed_img_name = filename.split(".")[0] + ".png"
-                processed_img_path = os.path.join(session["request_path_processed"], processed_img_name)
-                processed_img = process_image(file.stream, processed_img_path, bgremove_session)
+    file_name_list = [file.filename.split(".")[0]+".png" for file in files]
+    processed_file_name_list = [os.path.join(session["request_path_processed"], filename.split(".")[0] + ".png") for filename in file_name_list]
 
-                # Append processed image list to tensor dataset
-                file_list.append(processed_img)
-                file_name_list.append(processed_img_name)
-
-            except Exception as e:
-               return f"Error processing file: {str(e)}", 500
-        
-        else:
-            return "{} was not uploaded, operation stopped".format(file.filename)
+    dataset = ImageGenerator(file_list=files,
+                             augment_bool=False,
+                             processed_file_name_list=processed_file_name_list,
+                             bg_session=bgremove_session)
 
     # Get system predictions
-    prediction_df = get_system_prediction(session["request_path_processed"], file_list, file_name_list)
+    prediction_df = get_system_prediction(session["request_path_processed"], dataset, file_name_list)
 
     # Save the predictions to a CSV file
     predictiondf_path = os.path.join(

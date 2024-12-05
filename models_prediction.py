@@ -1,4 +1,3 @@
-import skimage as ski
 import numpy as np
 import pandas as pd
 import os
@@ -51,15 +50,20 @@ def prediction_loop(dataloader):
     predictions = []
     with torch.no_grad():
         for batch, (X) in enumerate(dataloader):
-                
-                # Compute prediction
-                pred = cnn_model(torch.tensor(X[0]).unsqueeze(0))
+                image = torch.tensor(X).unsqueeze(0)
+                # Check if image is wrongly processed (based on the proportion of non-zero pixels)
+                if torch.sum((image > 0)/ 73344) < 0.275:
+                    pred = torch.tensor([[0] * len(SPECIES_NAMES)])
+                    print("Denied", pred, pred.shape)
+                else:
+                    pred = cnn_model(image)
+                    print("Accepted", pred, pred.shape)
 
                 predictions.append(pred.cpu().detach().numpy())
 
     return np.concatenate(predictions)
 
-def get_cnn_prediction(file_list):
+def get_cnn_prediction(datasets):
     """
     Get CNN model predictions for the given dataset.
 
@@ -70,9 +74,8 @@ def get_cnn_prediction(file_list):
         tuple: Predictions for highest and second highest scores and species names.
     """
 
-    # Generate pytorch dataset
-    dataset = torch.utils.data.TensorDataset(torch.stack(file_list)) 
-    dataloader = torch.utils.data.DataLoader(dataset, batch_size=None, shuffle=False) #, num_workers=8
+    # Generate pytorch dataloader
+    dataloader = torch.utils.data.DataLoader(torch.utils.data.ConcatDataset(datasets), batch_size=1, shuffle=False)
 
     # get prediction from model
     prediction_list = prediction_loop(dataloader)
@@ -88,17 +91,29 @@ def get_cnn_prediction(file_list):
         Returns:
             tuple: Arrays of scores and species names.
         """
+    
         highest_scores = [np.sort(prediction)[-rank] for prediction in predictions]
         highest_indices = [
             np.where(prediction == score)[0][0]
             for prediction, score in zip(predictions, highest_scores)
         ]
-        species_names = [SPECIES_NAMES[idx] for idx in highest_indices]
 
-        return np.asarray(logistic_function(highest_scores)), np.asarray(species_names)
+        species_names = np.asarray([SPECIES_NAMES[idx] for idx in highest_indices])
+        calibrated_highest_scores = np.asarray(logistic_function(highest_scores))
+        
+        for i, score in enumerate(calibrated_highest_scores):
+            # Do not return prediction if score is too low
+            if (float(score) < 0.5) and (rank == 1):
+                species_names[i] = "Low Confidence Prediction"
+            if (float(score) < 0.25) and (rank == 2):
+                species_names[i] = "Low Confidence Prediction"
+            if (float(score) < 0.00039):
+                species_names[i] = "Processing Error Detected"
 
-    highest_scores, highest_species = parse_prediction(prediction_list, 1)
-    second_highest_scores, second_highest_species = parse_prediction(prediction_list, 2)
+        return calibrated_highest_scores, species_names
+
+    highest_scores, highest_species = parse_prediction(prediction_list, rank=1)
+    second_highest_scores, second_highest_species = parse_prediction(prediction_list, rank=2)
 
     return (
         highest_scores,

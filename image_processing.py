@@ -1,15 +1,36 @@
 import numpy as np
-import tensorflow as tf
 import skimage as ski
-from rembg import remove, new_session
+from rembg import remove
 from PIL import Image
 import torch
 import torchvision
+import albumentations as A
 
-def process_image(file_stream, processed_img_path, bg_session):
-    """Process an image by removing the background, aligning, enhancing contrast, and resizing."""
-        
-    def remove_bg_and_rotate(image, bg_session):
+class ImageGenerator (torch.utils.data.Dataset):
+    def __init__(self, file_list, augment_bool, processed_file_name_list, bg_session):
+        self.file_list = file_list
+        self.augment_bool = augment_bool
+        self.processed_file_name_list = processed_file_name_list
+        self.bg_session = bg_session
+
+        self.augment_pipe = A.Compose([
+                            # Image Capture Variance
+                            A.ISONoise(color_shift=(0.01, 0.05), intensity=(0.1, 0.5), p=.5),
+                            A.PlanckianJitter(p=.5),
+                            A.ImageCompression(quality_lower=75, quality_upper=100, p=.25),
+                            A.Defocus(radius=(1, 3), p=.25),
+                            A.RandomGamma(gamma_limit=(80, 120), p=.25),
+                            A.MotionBlur(blur_limit=(3, 3), p=.25),
+                            A.Downscale(scale_min=0.75, scale_max=1, p=.25),
+                            A.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.2, p=.5),
+                            A.ChannelDropout(channel_drop_range=(1, 1), p=.25),
+                            A.MultiplicativeNoise(multiplier=(0.9, 1.1), per_channel=True, p=.25),
+                        ])
+
+    def __len__(self):
+        return len(self.file_list)
+    
+    def remove_bg_and_rotate(self, image, bg_session):
         # Remove the background (transparent background)
         image_rembg = remove(image, bgcolor=(0, 0, 0, -1), session=bg_session)
         mask = np.asarray(image_rembg)[:, :, 3] > 10  # Mask where alpha > 10
@@ -39,14 +60,14 @@ def process_image(file_stream, processed_img_path, bg_session):
         # Return the cropped image and mask (exclude alpha channel from the image)
         return image_cropped[:, :, :3], mask_cropped
     
-    def CLAHE_transform(image, clip_limit=0.5, nbins=32):
+    def CLAHE_transform(self, image, clip_limit=0.5, nbins=32):
         # Convert image to grayscale and apply CLAHE
         equalized_img = ski.exposure.equalize_adapthist(np.mean(image, axis=-1), clip_limit=clip_limit, nbins=nbins)
         equalized_img = ski.filters.median(equalized_img, ski.morphology.disk(1))
         return torch.tensor(equalized_img, dtype=torch.float32)
 
 
-    def pad_and_resize(image):
+    def pad_and_resize(self, image):
         # Pad the image to make it square, with the longer dimension being the target size
         height, width = image.shape[:2]
         max_dim = max(height, width)
@@ -55,25 +76,46 @@ def process_image(file_stream, processed_img_path, bg_session):
         image_padded = torch.nn.functional.pad(image, (pad_width, pad_width, pad_height, pad_height), mode='constant', value=0)
 
         # Resize the image to 512x512, then crop to the desired region
-        image_resized = torchvision.transforms.functional.resize(image_padded.unsqueeze(0), (512, 512)).numpy()[0]
-        return image_resized[128:384, :]
+        image_resized = torchvision.transforms.functional.resize(image_padded.unsqueeze(0), (384, 384)).numpy()[0]
+        return image_resized[96:288, :]
 
-    # Load image
-    image = Image.open(file_stream)
+    def __getitem__(self, idx):
+        """
+        Generate an image tensor based on the index.
+        Args:
+            idx: Index of the augmentation (0 for the original image).
 
-    # Remove background, rotate the image, and get the mask
-    image, mask = remove_bg_and_rotate(image, bg_session)
+        Returns:
+            Tensor of the processed image.
+        """
+        # Load image
+        file = self.file_list[idx].stream
+        image = Image.open(file)
 
-    # Apply CLAHE transformation
-    image = CLAHE_transform(image / 255)
+        # Remove background, rotate the image, and get the mask
+        image, mask = self.remove_bg_and_rotate(image, self.bg_session)
 
-    # Apply the mask to remove background from image
-    image[~mask] = 0
+        if self.augment_bool:
+            # Apply augmentations to the image
+            processed_image = self.augment_pipe(image = image.astype('float32'))["image"]
+        else:
+            # Use the original unaugmented image
+            processed_image = image
 
-    # Pad and resize the image to the specified size
-    image = pad_and_resize(image)
+        # Normalize and apply CLAHE
+        processed_image = self.CLAHE_transform(processed_image / 255)
 
-    # Save the processed image
-    ski.io.imsave(processed_img_path, (image * 255).astype(np.uint8))
+        # Apply mask to remove the background
+        processed_image[~mask] = 0
 
-    return torch.tensor(image, dtype=torch.float32).unsqueeze(0)
+        # Pad and resize the image
+        processed_image = self.pad_and_resize(processed_image)
+
+        # Convert to tensor and add batch dimension
+        processed_tensor = torch.tensor(processed_image, dtype=torch.float32).unsqueeze(0)
+
+        #ToDo: Save the processed image to a file
+        if self.augment_bool == False:
+            ski.io.imsave(self.processed_file_name_list[idx], (processed_image * 255).astype(np.uint8))
+
+        return processed_tensor
