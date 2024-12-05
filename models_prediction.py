@@ -51,7 +51,6 @@ def prediction_loop(dataloader):
     with torch.no_grad():
         for batch, (X) in enumerate(dataloader):
                 image = torch.tensor(X).unsqueeze(0)
-                print(image.shape)
                 # Check if image is wrongly processed (based on the proportion of non-zero pixels)
                 if torch.sum((image > 0)/ 73344) < 0.275:
                     pred = torch.tensor([[-99] * len(SPECIES_NAMES)])
@@ -78,39 +77,21 @@ def get_cnn_prediction(datasets):
 
     # get prediction from model
     prediction_list = prediction_loop(dataloader)
-
-    def parse_prediction(predictions, rank):
-        """
-        Parse the prediction list to get species names and scores.
-
-        Args:
-            predictions (list): List of predictions.
-            rank (int): Rank of the prediction to parse (1 for highest, 2 for second highest).
-
-        Returns:
-            tuple: Arrays of scores and species names.
-        """
     
-        highest_scores = [np.sort(prediction)[-rank] for prediction in predictions]
-        highest_indices = [
-            np.where(prediction == score)[0][0]
-            for prediction, score in zip(predictions, highest_scores)
+    return prediction_list
+
+def parse_prediction(predictions, rank):
+    
+    highest_scores = [np.sort(prediction)[-rank] for prediction in predictions]
+    highest_indices = [
+        np.where(prediction == score)[0][0]
+        for prediction, score in zip(predictions, highest_scores)
         ]
 
-        species_names = np.asarray([SPECIES_NAMES[idx] for idx in highest_indices])
-        calibrated_highest_scores = np.asarray(logistic_function(highest_scores))
+    species_names = np.asarray([SPECIES_NAMES[idx] for idx in highest_indices])
+    calibrated_highest_scores = np.asarray(logistic_function(highest_scores))
 
-        return calibrated_highest_scores, species_names
-
-    highest_scores, highest_species = parse_prediction(prediction_list, rank=1)
-    second_highest_scores, second_highest_species = parse_prediction(prediction_list, rank=2)
-
-    return (
-        highest_scores,
-        highest_species,
-        second_highest_scores,
-        second_highest_species,
-    )
+    return calibrated_highest_scores, species_names
 
 #ef get_system_prediction(folder_path):
 def get_system_prediction(folder_path, datasets, file_name_list):
@@ -126,27 +107,19 @@ def get_system_prediction(folder_path, datasets, file_name_list):
 
     file_name_list = [os.path.join(folder_path, x) for x in file_name_list]
 
-    # Initialize lists to store all predictions
-    all_highest_scores = []
-    all_highest_species = []
-    all_second_highest_scores = []
-    all_second_highest_species = []
-
     # Get predictions for every augmentation run
+    prediction_list_ls = []
     for dataset in datasets:
-        highest_scores, highest_species, second_highest_scores, second_highest_species = get_cnn_prediction(dataset)
-        all_highest_scores.append(highest_scores)
-        all_highest_species.append(highest_species)
-        all_second_highest_scores.append(second_highest_scores)
-        all_second_highest_species.append(second_highest_species)
+        prediction_list = get_cnn_prediction(dataset)
+        print(prediction_list)
+        prediction_list_ls.append(prediction_list)
 
-    # Average the results
-    highest_scores = np.mean(all_highest_scores, axis=0)
-    second_highest_scores = np.mean(all_second_highest_scores, axis=0)
-
-    # Use the most frequent species prediction
-    highest_species = [max(set(species), key=species.count) for species in zip(*all_highest_species)]
-    second_highest_species = [max(set(species), key=species.count) for species in zip(*all_second_highest_species)]
+    # Average predictions from all augmentation runs
+    print(prediction_list_ls)
+    avg_prediction_list = np.mean(prediction_list_ls, axis=0)
+        
+    highest_scores, highest_species = parse_prediction(avg_prediction_list, 1)
+    second_highest_scores, second_highest_species = parse_prediction(avg_prediction_list, 2)
 
     # Check for low confidence predictions
     for i, score in enumerate(highest_scores):
@@ -162,7 +135,7 @@ def get_system_prediction(folder_path, datasets, file_name_list):
             second_highest_species[i] = "Low Confidence Prediction"
         # Do not return prediction if score is close to zero as it indicates a processing error
         if (float(score) < 0.00001):
-            highest_species[i] = "Processing Error Detected"
+            second_highest_species[i] = "Processing Error Detected"
 
     df = pd.DataFrame(
         {

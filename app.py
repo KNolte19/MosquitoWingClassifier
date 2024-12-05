@@ -1,6 +1,7 @@
 import os
 import uuid
 import tempfile
+import pandas as pd
 
 from flask import Flask, render_template, request, session, send_file
 from werkzeug.utils import secure_filename
@@ -84,7 +85,7 @@ def upload_folder():
     )
 
     prediction_df[
-        [
+        [   "image_path",
             "image_name",
             "highest_species_prediction",
             "highest_species_confidence",
@@ -95,11 +96,26 @@ def upload_folder():
 
     prediction_dict = prediction_df.to_dict(orient="records")
     title = str(session["identifier"])
-
+    
     return render_template(
         "predictions.html", predictions=prediction_dict, request=title
     )
 
+@app.route("/get_example")
+def get_example():
+   """Display some example predictions."""
+
+   session["identifier"] = "example"
+
+   example_path = os.path.join(
+        app.config["STATIC_FOLDER"], "example", "predictions_example.csv"
+    )
+   
+   prediction_dict = pd.read_csv(example_path, sep=";").to_dict(orient="records")
+   
+   return render_template(
+        "predictions.html", predictions=prediction_dict, request="Example"
+    )
 
 @app.route("/display_pdf")
 def display_pdf():
@@ -110,11 +126,11 @@ def display_pdf():
     return send_file(pdf_path, as_attachment=False)
 
 
-@app.route("/display_iden_pdf")
-def display_iden_pdf():
-    """Display the reverse identification key PDF."""
+@app.route("/display_other_pdf")
+def display_other_pdf():
+    """Display the other labels as PDF."""
     pdf_path = os.path.join(
-        app.config["STATIC_FOLDER"], "guide", "Reverse-identification-key.pdf"
+        app.config["STATIC_FOLDER"], "guide", "Other_Species.pdf"
     )
     return send_file(pdf_path, as_attachment=False)
 
@@ -122,16 +138,25 @@ def display_iden_pdf():
 @app.route("/download_csv", methods=["GET"])
 def download_csv():
     """Download the CSV file containing predictions."""
-    csv_file_path = os.path.join(
-        session["request_path"], "predictions_{}.csv".format(session["identifier"])
-    )
+    if session["identifier"] == "example":
+        csv_file_path = os.path.join(
+            app.config["STATIC_FOLDER"], "example", "predictions_example.csv"
+        )
+    else:
+        csv_file_path = os.path.join(
+            session["request_path"], "predictions_{}.csv".format(session["identifier"])
+        )
     return send_file(csv_file_path, as_attachment=True)
 
 
 @app.route("/download_folder", methods=["GET"])
 def download_folder():
     """Download the entire request folder as a zip file."""
-    folder_path = session["request_path"]
+    if session["identifier"] == "example":
+        folder_path = os.path.join(app.config["STATIC_FOLDER"], "example")
+    else:
+        folder_path = session["request_path"]
+
     zip_file_name = "request_{}.zip".format(session["identifier"])
     zip_path = os.path.join(tempfile.gettempdir(), zip_file_name)
 

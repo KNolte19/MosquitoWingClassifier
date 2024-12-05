@@ -19,27 +19,33 @@
         
         <main>
             <section class="introduction">
-                <p class="tooltip-text"> Welcome to our mosquito wing image classifier. This tool is designed for species identification based on uploaded images of mosquito wings. It's currently in a testing phase, and while our classification model is generally reliable, occasional errors may occur. Each result is accompanied by a confidence score to help assess the accuracy of the identification. Please review the accuracy of your results using the guidelines provided <a href="/display_iden_pdf">here</a>. You will receive a unique identifier for each submission for future reference.
+                <p class="tooltip-text"> This tool is designed for mosquito species identification based on uploaded images of wings. It's currently in a testing phase, and while our classification model is generally reliable, occasional errors may occur.
+                    Each result is accompanied by a confidence score to help assess the accuracy of the identification. You will receive a unique identifier for each submission for future reference. Some species are summarized under the label <a href="/display_other_pdf">"other"</a>  .
                 </p>
             </section>
             
             <section class="upload-section">
                 <h2>Upload Files</h2> 
-                <p class="tooltip-text">For optimal classification, please ensure that the images have a neutral background and clearly show a single, intact mosquito wing. Acceptable file formats include JPEG, PNG, and TIFF. You can upload up to 100 images per session. We highly recommend reviewing our <a href="/display_pdf">Image Capture Guidelines</a> for detailed instructions on preparing your mosquito wing specimens. By uploading images, you agree to grant us the rights to use them for research and educational purposes, confirming that you own or have the necessary rights for the images.
+                <p class="tooltip-text">For optimal classification, please ensure that the images have a neutral background and clearly show a single, intact mosquito wing.
+                     Acceptable file formats include JPG, JPEG, PNG, and TIFF. You can upload up to 100 images per session.
+                    We highly recommend reviewing our <a href="/display_pdf">Image Capture Guidelines</a> for detailed instructions on preparing your mosquito wing specimens.
+                    By uploading images, you agree to grant us the rights to use them for research and educational purposes, confirming that you own or have the necessary rights for the images.
+                    <a href="/get_example"> Click here to get an example prediction.</a>
                 </p>
                 <div class="image-container">
                     <img src="{{ url_for('static', filename='images/wing-example-1.png') }}" alt="Wing Image Example">
                 </div> 
 
                 <form action="/upload_folder" method="POST" enctype="multipart/form-data">
-                    <input type="file" name="file" multiple class="input-file" id="fileInput"/>
+                    <input type="file" name="file" multiple class="input-file" id="fileInput"/> 
                     <button type="submit" class="btn-submit" id="uploadButton" disabled>Upload & Classify</button>
                 </form>
+
             </section>
             
             <section class="contact">
-                <h2>Contact Us</h2>
                 <div class="contact-container">
+                    <h2>Contact Us</h2>
                     <div class="contact-info">
                         <p class="tooltip-text">
                             Bernhard-Nocht Institute for Tropical Medicine<br>

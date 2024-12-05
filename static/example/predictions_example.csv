@@ -1,0 +1,17 @@
+;image_path;image_name;highest_species_prediction;highest_species_confidence;second_highest_species_prediction;second_highest_species_confidence
+0;static/example/processed/ae_aegypti_01.png;ae_aegypti_01.png;Ae. aegypti;0.99;Low Confidence Prediction;0.0
+1;static/example/processed/ae_aegypti_03.png;ae_aegypti_03.png;Processing Error Detected;0.0;Processing Error Detected;0.0
+2;static/example/processed/ae_albopictus_01.png;ae_albopictus_01.png;Ae. albopictus;1.0;Low Confidence Prediction;0.0
+3;static/example/processed/ae_albopictus_03.png;ae_albopictus_03.png;Ae. albopictus;1.0;Low Confidence Prediction;0.0
+4;static/example/processed/ae_koreicus_01.png;ae_koreicus_01.png;Ae. koreicus;0.99;Low Confidence Prediction;0.01
+5;static/example/processed/ae_koreicus_03.png;ae_koreicus_03.png;Ae. koreicus;0.99;Low Confidence Prediction;0.0
+6;static/example/processed/ae_vexans_01.png;ae_vexans_01.png;Ae. vexans;0.95;Low Confidence Prediction;0.01
+7;static/example/processed/ae_vexans_03.png;ae_vexans_03.png;Ae. vexans;0.99;Low Confidence Prediction;0.0
+8;static/example/processed/an_maculipennis_01.png;an_maculipennis_01.png;An. maculipennis s.l.;1.0;Low Confidence Prediction;0.0
+9;static/example/processed/an_maculipennis_03.png;an_maculipennis_03.png;An. maculipennis s.l.;1.0;Low Confidence Prediction;0.0
+10;static/example/processed/an_namibi_01.png;an_namibi_01.png;Low Confidence Prediction;0.31;Low Confidence Prediction;0.27
+11;static/example/processed/an_namibi_03.png;an_namibi_03.png;other;0.98;Low Confidence Prediction;0.0
+12;static/example/processed/cq_richardii_01.png;cq_richardii_01.png;Cq. richiardii;1.0;Low Confidence Prediction;0.0
+13;static/example/processed/cq_richardii_03.png;cq_richardii_03.png;Cq. richiardii;0.98;Ae. caspius;0.15
+14;static/example/processed/cx_pipiens_01.png;cx_pipiens_01.png;Cx. torrentium-pipiens s.l. pair;1.0;Cx. modestus;0.11
+15;static/example/processed/cx_pipiens_03.png;cx_pipiens_03.png;Cx. torrentium-pipiens s.l. pair;0.99;Low Confidence Prediction;0.0
