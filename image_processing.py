@@ -95,15 +95,18 @@ class ImageGenerator (torch.utils.data.Dataset):
         # Remove background, rotate the image, and get the mask
         image, mask = self.remove_bg_and_rotate(image, self.bg_session)
 
+        # Standardize the image to have pixel values in the range [0, 1]
+        image = np.asarray(image).astype('float32') / 255
+
         if self.augment_bool:
             # Apply augmentations to the image
-            processed_image = self.augment_pipe(image = image.astype('float32'))["image"]
+            processed_image = self.augment_pipe(image = image)["image"]
         else:
             # Use the original unaugmented image
             processed_image = image
 
         # Normalize and apply CLAHE
-        processed_image = self.CLAHE_transform(processed_image / 255)
+        processed_image = self.CLAHE_transform(processed_image)
 
         # Apply mask to remove the background
         processed_image[~mask] = 0
@@ -114,7 +117,6 @@ class ImageGenerator (torch.utils.data.Dataset):
         # Convert to tensor and add batch dimension
         processed_tensor = torch.tensor(processed_image, dtype=torch.float32).unsqueeze(0)
 
-        #ToDo: Save the processed image to a file
         if self.augment_bool == False:
             ski.io.imsave(self.processed_file_name_list[idx], (processed_image * 255).astype(np.uint8))
 

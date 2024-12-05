@@ -51,13 +51,12 @@ def prediction_loop(dataloader):
     with torch.no_grad():
         for batch, (X) in enumerate(dataloader):
                 image = torch.tensor(X).unsqueeze(0)
+                print(image.shape)
                 # Check if image is wrongly processed (based on the proportion of non-zero pixels)
                 if torch.sum((image > 0)/ 73344) < 0.275:
-                    pred = torch.tensor([[0] * len(SPECIES_NAMES)])
-                    print("Denied", pred, pred.shape)
+                    pred = torch.tensor([[-99] * len(SPECIES_NAMES)])
                 else:
                     pred = cnn_model(image)
-                    print("Accepted", pred, pred.shape)
 
                 predictions.append(pred.cpu().detach().numpy())
 
@@ -100,15 +99,6 @@ def get_cnn_prediction(datasets):
 
         species_names = np.asarray([SPECIES_NAMES[idx] for idx in highest_indices])
         calibrated_highest_scores = np.asarray(logistic_function(highest_scores))
-        
-        for i, score in enumerate(calibrated_highest_scores):
-            # Do not return prediction if score is too low
-            if (float(score) < 0.5) and (rank == 1):
-                species_names[i] = "Low Confidence Prediction"
-            if (float(score) < 0.25) and (rank == 2):
-                species_names[i] = "Low Confidence Prediction"
-            if (float(score) < 0.00039):
-                species_names[i] = "Processing Error Detected"
 
         return calibrated_highest_scores, species_names
 
@@ -123,7 +113,7 @@ def get_cnn_prediction(datasets):
     )
 
 #ef get_system_prediction(folder_path):
-def get_system_prediction(folder_path, file_list, file_name_list):
+def get_system_prediction(folder_path, datasets, file_name_list):
     """
     Get system predictions for all images in the specified folder.
 
@@ -135,7 +125,44 @@ def get_system_prediction(folder_path, file_list, file_name_list):
     """
 
     file_name_list = [os.path.join(folder_path, x) for x in file_name_list]
-    highest_scores, highest_species, second_highest_scores, second_highest_species = get_cnn_prediction(file_list)
+
+    # Initialize lists to store all predictions
+    all_highest_scores = []
+    all_highest_species = []
+    all_second_highest_scores = []
+    all_second_highest_species = []
+
+    # Get predictions for every augmentation run
+    for dataset in datasets:
+        highest_scores, highest_species, second_highest_scores, second_highest_species = get_cnn_prediction(dataset)
+        all_highest_scores.append(highest_scores)
+        all_highest_species.append(highest_species)
+        all_second_highest_scores.append(second_highest_scores)
+        all_second_highest_species.append(second_highest_species)
+
+    # Average the results
+    highest_scores = np.mean(all_highest_scores, axis=0)
+    second_highest_scores = np.mean(all_second_highest_scores, axis=0)
+
+    # Use the most frequent species prediction
+    highest_species = [max(set(species), key=species.count) for species in zip(*all_highest_species)]
+    second_highest_species = [max(set(species), key=species.count) for species in zip(*all_second_highest_species)]
+
+    # Check for low confidence predictions
+    for i, score in enumerate(highest_scores):
+        # Do not return prediction if score is too low
+        if (float(score) < 0.5):
+            highest_species[i] = "Low Confidence Prediction"
+        # Do not return prediction if score is close to zero as it indicates a processing error
+        if (float(score) < 0.00001):
+            highest_species[i] = "Processing Error Detected"
+    for i, score in enumerate(second_highest_scores):
+        # Do not return prediction if score is too low
+        if (float(score) < 0.1) or highest_species[i] == "Low Confidence Prediction":
+            second_highest_species[i] = "Low Confidence Prediction"
+        # Do not return prediction if score is close to zero as it indicates a processing error
+        if (float(score) < 0.00001):
+            highest_species[i] = "Processing Error Detected"
 
     df = pd.DataFrame(
         {

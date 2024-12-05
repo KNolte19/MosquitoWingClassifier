@@ -59,13 +59,24 @@ def upload_folder():
     file_name_list = [file.filename.split(".")[0]+".png" for file in files]
     processed_file_name_list = [os.path.join(session["request_path_processed"], filename.split(".")[0] + ".png") for filename in file_name_list]
 
-    dataset = ImageGenerator(file_list=files,
-                             augment_bool=False,
-                             processed_file_name_list=processed_file_name_list,
-                             bg_session=bgremove_session)
+    augmented_datasets = []
+    for i in range(NUM_AUG):
+        # Dont augment the first image
+        if i == 0:
+            augment_bool = False
+        else:
+            augment_bool = True
+
+        # Get image dataset from the uploaded files
+        dataset = ImageGenerator(file_list=files,
+                                augment_bool=augment_bool,
+                                processed_file_name_list=processed_file_name_list,
+                                bg_session=bgremove_session)
+        
+        augmented_datasets.append(dataset)
 
     # Get system predictions
-    prediction_df = get_system_prediction(session["request_path_processed"], dataset, file_name_list)
+    prediction_df = get_system_prediction(session["request_path_processed"], augmented_datasets, file_name_list)
 
     # Save the predictions to a CSV file
     predictiondf_path = os.path.join(
