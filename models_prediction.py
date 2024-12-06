@@ -32,15 +32,6 @@ SPECIES_NAMES = [
 cnn_model = torch.load(os.path.join("static", "models", "model_1_flowing-music-18.pt"), map_location=torch.device('cpu'), weights_only=False)
 
 def logistic_function(x):
-    """
-    Logistic function for converting scores to probabilities.
-
-    Args:
-        x (float): Input score.
-
-    Returns:
-        float: Probability value.
-    """
     coefficients = 2.52
     intercept = -7.85
     z = np.dot(x, coefficients) + intercept
@@ -61,15 +52,6 @@ def prediction_loop(dataloader):
     return np.concatenate(predictions)
 
 def get_cnn_prediction(datasets):
-    """
-    Get CNN model predictions for the given dataset.
-
-    Args:
-        dataset (tf.data.Dataset): Dataset containing images.
-
-    Returns:
-        tuple: Predictions for highest and second highest scores and species names.
-    """
     prediction_list = []
     # Generate pytorch dataloader
     for dataset in datasets:
@@ -93,16 +75,6 @@ def parse_prediction(predictions, rank):
 
 #ef get_system_prediction(folder_path):
 def get_system_prediction(folder_path, datasets, file_name_list):
-    """
-    Get system predictions for all images in the specified folder.
-
-    Args:
-        folder_path (str): Path to the folder containing images.
-
-    Returns:
-        DataFrame: DataFrame containing predictions and confidence scores.
-    """
-
     file_name_list = [os.path.join(folder_path, x) for x in file_name_list]
 
     # Get predictions for every augmentation run
@@ -112,7 +84,7 @@ def get_system_prediction(folder_path, datasets, file_name_list):
         avg_prediction= np.mean(prediction_list, axis=0)
         avg_prediction_list.append(avg_prediction)
 
-    # Average predictions from all augmentation runs
+    # Get highest and second highest predictions
     highest_scores, highest_species = parse_prediction(avg_prediction_list, 1)
     second_highest_scores, second_highest_species = parse_prediction(avg_prediction_list, 2)
 

@@ -111,7 +111,7 @@ def display_pdf():
 def display_other_pdf():
     """Display the other labels as PDF."""
     pdf_path = os.path.join(
-        app.config["STATIC_FOLDER"], "guide", "Other_Species.pdf"
+        app.config["STATIC_FOLDER"], "guide", "Species.pdf"
     )
     return send_file(pdf_path, as_attachment=False)
 

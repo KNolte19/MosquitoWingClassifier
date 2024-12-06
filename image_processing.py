@@ -82,15 +82,6 @@ class ImageGenerator (torch.utils.data.Dataset):
         return image_resized[96:288, :]
 
     def __getitem__(self, idx):
-        """
-        Generate an image tensor based on the index.
-        Args:
-            idx: Index of the augmentation (0 for the original image).
-
-        Returns:
-            Tensor of the processed image.
-        """
-
         augmented_datasets = []
         # Load image
         file = self.file_list[idx].stream
