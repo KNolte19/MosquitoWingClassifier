@@ -53,7 +53,7 @@ RUN chmod +x /app/entrypoint.sh
 USER appuser
 
 # Expose the port that the application listens on.
-EXPOSE 5050
+EXPOSE 8080
 
 # Run the application.
 ENTRYPOINT ["./entrypoint.sh"]
