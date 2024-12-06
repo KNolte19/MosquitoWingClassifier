@@ -40,6 +40,6 @@ Open your web browser and navigate to `http://localhost:5050`.
 
 **Support:** Contact us at kristopher.nolte@bnitm.de for any inquiries or assistance.
 
-**Version:** v0.1
+**Version:** v0.2
 
-**Last Updated:** June  26,  2024
+**Last Updated:** December  6,  2024
