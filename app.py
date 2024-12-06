@@ -36,15 +36,25 @@ def upload_folder():
 
     # Create a new directory for the request
     session["identifier"] = get_identifier()
-    session["request_path"] = os.path.join(
-        app.config["REQUESTS"], "request_{}".format(session["identifier"])
-    )
+
+    base_request_path = os.path.join(app.root_path, 'static', 'requests')
+    session["request_path"] = os.path.join(base_request_path, 'request_{}'.format(session["identifier"]))
+    session["request_path_processed"] = os.path.join(session["request_path"], "processed")
+
+    try:
+        os.makedirs(session["request_path"], exist_ok=True)
+        os.makedirs(session["request_path_processed"], exist_ok=True)
+    except PermissionError as e:
+        app.logger.error(f"Permission error: {e}")
+        return "Server configuration issue: Unable to create necessary directories.", 500
+    except Exception as e:
+        app.logger.error(f"Unexpected error: {e}")
+        return "An unexpected error occurred.", 500
+
+    session["request_path"] = os.path.join(app.config["REQUESTS"], "request_{}".format(session["identifier"]))
     session["request_path_processed"] = os.path.join(
         session["request_path"], "processed"
     )
-
-    os.mkdir(session["request_path"])
-    os.mkdir(session["request_path_processed"])
 
     # Check and process each file
     files = request.files.getlist("file")
