@@ -29,7 +29,7 @@ SPECIES_NAMES = [
 ]
 
 # Load pre-trained model
-cnn_model = torch.load(os.path.join("static", "models", "model_1_flowing-music-18.pt"), map_location=torch.device('cpu'))
+cnn_model = torch.load(os.path.join("static", "models", "model_1_flowing-music-18.pt"), map_location=torch.device('cpu'), weights_only=False)
 
 def logistic_function(x):
     """
@@ -50,14 +50,13 @@ def prediction_loop(dataloader):
     predictions = []
     with torch.no_grad():
         for batch, (X) in enumerate(dataloader):
-                image = torch.tensor(X).unsqueeze(0)
                 # Check if image is wrongly processed (based on the proportion of non-zero pixels)
-                if torch.sum((image > 0)/ 73344) < 0.275:
+                if torch.sum((X > 0)/ 73344) < 0.275:
                     pred = torch.tensor([[-99] * len(SPECIES_NAMES)])
                 else:
-                    pred = cnn_model(image)
+                    pred = cnn_model(X.unsqueeze(0))
 
-                predictions.append(pred.cpu().detach().numpy())
+                predictions.append(pred.cpu().clone().detach().numpy())
 
     return np.concatenate(predictions)
 
@@ -71,12 +70,11 @@ def get_cnn_prediction(datasets):
     Returns:
         tuple: Predictions for highest and second highest scores and species names.
     """
-
+    prediction_list = []
     # Generate pytorch dataloader
-    dataloader = torch.utils.data.DataLoader(torch.utils.data.ConcatDataset(datasets), batch_size=1, shuffle=False)
-
-    # get prediction from model
-    prediction_list = prediction_loop(dataloader)
+    for dataset in datasets:
+        dataloader = torch.utils.data.DataLoader(dataset, batch_size=4, shuffle=False)
+        prediction_list.extend(prediction_loop(dataloader))
     
     return prediction_list
 
@@ -91,7 +89,7 @@ def parse_prediction(predictions, rank):
     species_names = np.asarray([SPECIES_NAMES[idx] for idx in highest_indices])
     calibrated_highest_scores = np.asarray(logistic_function(highest_scores))
 
-    return calibrated_highest_scores, species_names
+    return list(calibrated_highest_scores), list(species_names)
 
 #ef get_system_prediction(folder_path):
 def get_system_prediction(folder_path, datasets, file_name_list):
@@ -108,35 +106,34 @@ def get_system_prediction(folder_path, datasets, file_name_list):
     file_name_list = [os.path.join(folder_path, x) for x in file_name_list]
 
     # Get predictions for every augmentation run
-    prediction_list_ls = []
+    avg_prediction_list = []
     for dataset in datasets:
         prediction_list = get_cnn_prediction(dataset)
-        print(prediction_list)
-        prediction_list_ls.append(prediction_list)
+        avg_prediction= np.mean(prediction_list, axis=0)
+        avg_prediction_list.append(avg_prediction)
 
     # Average predictions from all augmentation runs
-    print(prediction_list_ls)
-    avg_prediction_list = np.mean(prediction_list_ls, axis=0)
-        
     highest_scores, highest_species = parse_prediction(avg_prediction_list, 1)
     second_highest_scores, second_highest_species = parse_prediction(avg_prediction_list, 2)
 
     # Check for low confidence predictions
     for i, score in enumerate(highest_scores):
         # Do not return prediction if score is too low
+        if (float(score) < 0.00001):
+            highest_species[i] = "Processing Error Detected"
         if (float(score) < 0.5):
             highest_species[i] = "Low Confidence Prediction"
         # Do not return prediction if score is close to zero as it indicates a processing error
-        if (float(score) < 0.00001):
-            highest_species[i] = "Processing Error Detected"
+
     for i, score in enumerate(second_highest_scores):
-        # Do not return prediction if score is too low
-        if (float(score) < 0.1) or highest_species[i] == "Low Confidence Prediction":
-            second_highest_species[i] = "Low Confidence Prediction"
         # Do not return prediction if score is close to zero as it indicates a processing error
         if (float(score) < 0.00001):
             second_highest_species[i] = "Processing Error Detected"
+        # Do not return prediction if score is too low
+        if (float(score) < 0.1) or highest_species[i] == "Low Confidence Prediction":
+            second_highest_species[i] = "Low Confidence Prediction"
 
+    pd.set_option('display.max_colwidth', None) 
     df = pd.DataFrame(
         {
             "image_path": file_name_list,

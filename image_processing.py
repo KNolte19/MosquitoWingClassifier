@@ -5,23 +5,25 @@ from PIL import Image
 import torch
 import torchvision
 import albumentations as A
+import warnings
+warnings.filterwarnings("ignore")
 
 class ImageGenerator (torch.utils.data.Dataset):
-    def __init__(self, file_list, augment_bool, processed_file_name_list, bg_session):
+    def __init__(self, file_list, N_augmentations, processed_file_name_list, bg_session):
         self.file_list = file_list
-        self.augment_bool = augment_bool
+        self.N_augmentations = N_augmentations
         self.processed_file_name_list = processed_file_name_list
         self.bg_session = bg_session
 
         self.augment_pipe = A.Compose([
                             # Image Capture Variance
-                            A.ISONoise(color_shift=(0.01, 0.05), intensity=(0.1, 0.5), p=.5),
-                            A.PlanckianJitter(p=.5),
+                            A.ISONoise(color_shift=(0.01, 0.05), intensity=(0.1, 0.5), p=.5), # Had to be removed due to dependency issues
+                            A.PlanckianJitter(p=.5), # Had to be removed due to dependency issues
                             A.ImageCompression(quality_lower=75, quality_upper=100, p=.25),
                             A.Defocus(radius=(1, 3), p=.25),
                             A.RandomGamma(gamma_limit=(80, 120), p=.25),
                             A.MotionBlur(blur_limit=(3, 3), p=.25),
-                            A.Downscale(scale_min=0.75, scale_max=1, p=.25),
+                            A.Downscale(scale_min=0.75, scale_max=.99, p=.25),
                             A.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.2, p=.5),
                             A.ChannelDropout(channel_drop_range=(1, 1), p=.25),
                             A.MultiplicativeNoise(multiplier=(0.9, 1.1), per_channel=True, p=.25),
@@ -88,6 +90,8 @@ class ImageGenerator (torch.utils.data.Dataset):
         Returns:
             Tensor of the processed image.
         """
+
+        augmented_datasets = []
         # Load image
         file = self.file_list[idx].stream
         image = Image.open(file)
@@ -98,26 +102,29 @@ class ImageGenerator (torch.utils.data.Dataset):
         # Standardize the image to have pixel values in the range [0, 1]
         image = np.asarray(image).astype('float32') / 255
 
-        if self.augment_bool:
-            # Apply augmentations to the image
-            processed_image = self.augment_pipe(image = image)["image"]
-        else:
-            # Use the original unaugmented image
-            processed_image = image
+        for i in range(self.N_augmentations):
+            if i != 0:
+                # Apply augmentations to the image
+                processed_image = self.augment_pipe(image = image)["image"]
+            else:
+                # Use the original unaugmented image
+                processed_image = image
 
-        # Normalize and apply CLAHE
-        processed_image = self.CLAHE_transform(processed_image)
+            # Normalize and apply CLAHE
+            processed_image = self.CLAHE_transform(processed_image)
 
-        # Apply mask to remove the background
-        processed_image[~mask] = 0
+            # Apply mask to remove the background
+            processed_image[~mask] = 0
 
-        # Pad and resize the image
-        processed_image = self.pad_and_resize(processed_image)
+            # Pad and resize the image
+            processed_image = self.pad_and_resize(processed_image)
 
-        # Convert to tensor and add batch dimension
-        processed_tensor = torch.tensor(processed_image, dtype=torch.float32).unsqueeze(0)
+            # Convert to tensor and add batch dimension
+            processed_tensor = torch.tensor(processed_image, dtype=torch.float32).unsqueeze(0)
 
-        if self.augment_bool == False:
-            ski.io.imsave(self.processed_file_name_list[idx], (processed_image * 255).astype(np.uint8))
+            augmented_datasets.append(processed_tensor)
 
-        return processed_tensor
+            if i == 0:
+                ski.io.imsave(self.processed_file_name_list[idx], (processed_image * 255).astype(np.uint8))
+
+        return augmented_datasets

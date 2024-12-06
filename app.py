@@ -4,7 +4,6 @@ import tempfile
 import pandas as pd
 
 from flask import Flask, render_template, request, session, send_file
-from werkzeug.utils import secure_filename
 from image_processing import ImageGenerator
 from models_prediction import get_system_prediction
 from rembg import new_session
@@ -19,19 +18,11 @@ app.config["STATIC_FOLDER"] = "static"
 app.config["REQUESTS"] = "static/requests"
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "Apfelkuchen")
 
-# Allowed file extensions for uploads
-ALLOWED_EXTENSIONS = {"png", "jpeg", "tif", "jpg", "tiff"}
-NUM_AUG = 2
-
-def allowed_file(filename):
-    """Check if the filename has an allowed extension."""
-    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
-
+N_augmentations = 4
 
 def get_identifier():
     """Generate a random identifier for each request."""
     return str(uuid.uuid4())[:8]
-
 
 @app.route("/")
 def start():
@@ -60,25 +51,15 @@ def upload_folder():
     file_name_list = [file.filename.split(".")[0]+".png" for file in files]
     processed_file_name_list = [os.path.join(session["request_path_processed"], filename.split(".")[0] + ".png") for filename in file_name_list]
 
-    augmented_datasets = []
-    for i in range(NUM_AUG):
-        # Dont augment the first image
-        if i == 0:
-            augment_bool = False
-        else:
-            augment_bool = True
-
-        # Get image dataset from the uploaded files
-        dataset = ImageGenerator(file_list=files,
-                                augment_bool=augment_bool,
+    # Get image dataset from the uploaded files
+    augmented_datasets = ImageGenerator(file_list=files,
+                                N_augmentations=N_augmentations,
                                 processed_file_name_list=processed_file_name_list,
                                 bg_session=bgremove_session)
-        
-        augmented_datasets.append(dataset)
 
     # Get system predictions
     prediction_df = get_system_prediction(session["request_path_processed"], augmented_datasets, file_name_list)
-
+    
     # Save the predictions to a CSV file
     predictiondf_path = os.path.join(
         session["request_path"], "predictions_{}.csv".format(session["identifier"])
@@ -188,4 +169,4 @@ def download_folder():
 
 
 if __name__ == "__main__":
-    app.run(debug=False, port=1919)
+    app.run(debug=False)

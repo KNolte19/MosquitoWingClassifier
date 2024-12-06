@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-ARG PYTHON_VERSION=3.10
+ARG PYTHON_VERSION=3.10.12
 FROM python:${PYTHON_VERSION} as base
 
 # Prevents Python from writing pyc files.
@@ -14,11 +14,11 @@ COPY u2net.onnx /home/appuser/.u2net/u2net.onnx
 
 WORKDIR /app
 
-# Install system dependencies required for h5py and other Python packages.
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
-    build-essential \
-    libhdf5-dev \
-    && rm -rf /var/lib/apt/lists/*
+    libgl1-mesa-glx libglib2.0-0 \
+    llvm llvm-dev clang \
+    && apt-get clean
 
 # Create a non-privileged user that the app will run under.
 ARG UID=10001
