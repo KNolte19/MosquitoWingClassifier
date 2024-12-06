@@ -1,15 +1,16 @@
 import os
 import uuid
 import tempfile
-
-import tensorflow as tf
+import pandas as pd
 
 from flask import Flask, render_template, request, session, send_file
-from werkzeug.utils import secure_filename
-from image_processing import process_image
+from image_processing import ImageGenerator
 from models_prediction import get_system_prediction
 from rembg import new_session
 from zipfile import ZipFile
+
+# Create a new session for REMBG
+bgremove_session = new_session()
 
 # Configurations
 app = Flask(__name__)
@@ -17,19 +18,11 @@ app.config["STATIC_FOLDER"] = "static"
 app.config["REQUESTS"] = "static/requests"
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "Apfelkuchen")
 
-# Allowed file extensions for uploads
-ALLOWED_EXTENSIONS = {"png", "jpeg", "tif", "jpg", "tiff"}
-
-
-def allowed_file(filename):
-    """Check if the filename has an allowed extension."""
-    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
-
+N_augmentations = 4
 
 def get_identifier():
     """Generate a random identifier for each request."""
     return str(uuid.uuid4())[:8]
-
 
 @app.route("/")
 def start():
@@ -53,46 +46,27 @@ def upload_folder():
     os.mkdir(session["request_path"])
     os.mkdir(session["request_path_processed"])
 
-    # Create a new session for REMBG
-    bgremove_session = new_session()
-
     # Check and process each file
     files = request.files.getlist("file")
-    file_list = []
-    for file in files:
-        if file and allowed_file(file.filename):
-            filename = secure_filename(file.filename)
-            try:
-                # Process images directly from memory
-                processed_img_ls, unaugment_image = process_image(file.stream, bgremove_session)
+    file_name_list = [file.filename.split(".")[0]+".png" for file in files]
+    processed_file_name_list = [os.path.join(session["request_path_processed"], filename.split(".")[0] + ".png") for filename in file_name_list]
 
-                # Save the unaugmented and processed image for download
-                processed_img_path = os.path.join(session["request_path_processed"], filename.split(".")[0] + ".png")
-                unaugment_image.save(processed_img_path)
-
-                # Append processed image list to tensor dataset
-                file_list.extend(processed_img_ls)
-
-            except Exception as e:
-               return f"Error processing file: {str(e)}", 500
-        
-        else:
-            return "{} was not uploaded, operation stopped".format(file.filename)
-
-    # Generate tensorflow dataset
-    batch_size = len(processed_img_ls)
-    dataset = tf.data.Dataset.from_tensor_slices(file_list).batch(batch_size)
+    # Get image dataset from the uploaded files
+    augmented_datasets = ImageGenerator(file_list=files,
+                                N_augmentations=N_augmentations,
+                                processed_file_name_list=processed_file_name_list,
+                                bg_session=bgremove_session)
 
     # Get system predictions
-    prediction_df = get_system_prediction(os.path.join(session["request_path_processed"]), dataset, batch_size)
-
+    prediction_df = get_system_prediction(session["request_path_processed"], augmented_datasets, file_name_list)
+    
     # Save the predictions to a CSV file
     predictiondf_path = os.path.join(
         session["request_path"], "predictions_{}.csv".format(session["identifier"])
     )
 
     prediction_df[
-        [
+        [   "image_path",
             "image_name",
             "highest_species_prediction",
             "highest_species_confidence",
@@ -103,11 +77,26 @@ def upload_folder():
 
     prediction_dict = prediction_df.to_dict(orient="records")
     title = str(session["identifier"])
-
+    
     return render_template(
         "predictions.html", predictions=prediction_dict, request=title
     )
 
+@app.route("/get_example")
+def get_example():
+   """Display some example predictions."""
+
+   session["identifier"] = "example"
+
+   example_path = os.path.join(
+        app.config["STATIC_FOLDER"], "example", "predictions_example.csv"
+    )
+   
+   prediction_dict = pd.read_csv(example_path, sep=";").to_dict(orient="records")
+   
+   return render_template(
+        "predictions.html", predictions=prediction_dict, request="Example"
+    )
 
 @app.route("/display_pdf")
 def display_pdf():
@@ -118,11 +107,11 @@ def display_pdf():
     return send_file(pdf_path, as_attachment=False)
 
 
-@app.route("/display_iden_pdf")
-def display_iden_pdf():
-    """Display the reverse identification key PDF."""
+@app.route("/display_other_pdf")
+def display_other_pdf():
+    """Display the other labels as PDF."""
     pdf_path = os.path.join(
-        app.config["STATIC_FOLDER"], "guide", "Reverse-identification-key.pdf"
+        app.config["STATIC_FOLDER"], "guide", "Species.pdf"
     )
     return send_file(pdf_path, as_attachment=False)
 
@@ -130,16 +119,25 @@ def display_iden_pdf():
 @app.route("/download_csv", methods=["GET"])
 def download_csv():
     """Download the CSV file containing predictions."""
-    csv_file_path = os.path.join(
-        session["request_path"], "predictions_{}.csv".format(session["identifier"])
-    )
+    if session["identifier"] == "example":
+        csv_file_path = os.path.join(
+            app.config["STATIC_FOLDER"], "example", "predictions_example.csv"
+        )
+    else:
+        csv_file_path = os.path.join(
+            session["request_path"], "predictions_{}.csv".format(session["identifier"])
+        )
     return send_file(csv_file_path, as_attachment=True)
 
 
 @app.route("/download_folder", methods=["GET"])
 def download_folder():
     """Download the entire request folder as a zip file."""
-    folder_path = session["request_path"]
+    if session["identifier"] == "example":
+        folder_path = os.path.join(app.config["STATIC_FOLDER"], "example")
+    else:
+        folder_path = session["request_path"]
+
     zip_file_name = "request_{}.zip".format(session["identifier"])
     zip_path = os.path.join(tempfile.gettempdir(), zip_file_name)
 
@@ -171,4 +169,4 @@ def download_folder():
 
 
 if __name__ == "__main__":
-    app.run(debug=False, port=1919)
+    app.run(debug=False)
