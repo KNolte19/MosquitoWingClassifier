@@ -109,13 +109,14 @@ a:hover {
     width: 100%;
     margin-bottom: 20px;
     font-size: 1em;
+    text-align: left;
 }
 
 /* Image Styles */
 .image-container img {
     max-width: 80%; /* Reduced max width for smaller images */
     height: auto;
-    text-align: center;
+    text-align: left;
 }
 
 /* Contact logo image */

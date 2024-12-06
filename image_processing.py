@@ -1,142 +1,121 @@
 import numpy as np
-import tensorflow as tf
 import skimage as ski
-from rembg import remove, new_session
+from rembg import remove
 from PIL import Image
-import keras_cv
+import torch
+import torchvision
+import albumentations as A
+import warnings
+warnings.filterwarnings("ignore")
 
-# Initialize a new session for background removal
-bg_session = new_session()
+class ImageGenerator (torch.utils.data.Dataset):
+    def __init__(self, file_list, N_augmentations, processed_file_name_list, bg_session):
+        self.file_list = file_list
+        self.N_augmentations = N_augmentations
+        self.processed_file_name_list = processed_file_name_list
+        self.bg_session = bg_session
 
-augmentation_model = tf.keras.Sequential([tf.keras.layers.RandomBrightness((-.4, .2), value_range=(0, 255)),
-                                          tf.keras.layers.GaussianNoise(.25),
-                                          tf.keras.layers.GaussianDropout(.25),
-                                          keras_cv.layers.RandomSaturation((0,1)),
-                                          keras_cv.layers.RandomHue(.5, value_range=(0, 255)),
-                                          keras_cv.layers.RandomColorDegeneration(.5),
-                                          keras_cv.layers.RandomSharpness(.5, value_range=(0, 255)),])
+        self.augment_pipe = A.Compose([
+                            # Image Capture Variance
+                            A.ISONoise(color_shift=(0.01, 0.05), intensity=(0.1, 0.5), p=.5), # Had to be removed due to dependency issues
+                            A.PlanckianJitter(p=.5), # Had to be removed due to dependency issues
+                            A.ImageCompression(quality_lower=75, quality_upper=100, p=.25),
+                            A.Defocus(radius=(1, 3), p=.25),
+                            A.RandomGamma(gamma_limit=(80, 120), p=.25),
+                            A.MotionBlur(blur_limit=(3, 3), p=.25),
+                            A.Downscale(scale_min=0.75, scale_max=.99, p=.25),
+                            A.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.2, p=.5),
+                            A.ChannelDropout(channel_drop_range=(1, 1), p=.25),
+                            A.MultiplicativeNoise(multiplier=(0.9, 1.1), per_channel=True, p=.25),
+                        ])
 
-
-def process_image(file_stream, bg_session):
-    """Process an image by removing the background, aligning, enhancing contrast, and resizing."""
-
-    def remove_bg_and_rotate(image):
-        """
-        Remove the background from the image and rotate it to align with the main axis.
-
-        Args:
-            image (PIL.Image): Input image to process.
-
-        Returns:
-            tuple: A tuple containing the mask and the cropped, aligned image.
-        """
-        # Remove Background
+    def __len__(self):
+        return len(self.file_list)
+    
+    def remove_bg_and_rotate(self, image, bg_session):
+        # Remove the background (transparent background)
         image_rembg = remove(image, bgcolor=(0, 0, 0, -1), session=bg_session)
-        mask = np.asarray(image_rembg)[:, :, 3] > 10
+        mask = np.asarray(image_rembg)[:, :, 3] > 10  # Mask where alpha > 10
 
-        # Get Angle through Regionprops
+        # Apply the mask to the image to retain only foreground
         image_masked = image_rembg * np.dstack([mask] * 4)
-        properties = ski.measure.regionprops_table(
-            ski.measure.label(mask), properties=("axis_major_length", "orientation")
-        )
-        angle = -(
-            properties["orientation"][np.argmax(properties["axis_major_length"])]
-            * (180 / np.pi)
-            + 90
-        )
-        if angle < -90:
-            angle += 180
 
-        # Rotate image and mask
-        rotated_image = np.asarray(Image.fromarray(image_masked).rotate(angle))
-        rotated_mask = np.asarray(Image.fromarray(mask).rotate(angle))
+        # Get orientation from region properties
+        properties = ski.measure.regionprops_table(ski.measure.label(mask), properties=("axis_major_length", "orientation"))
+        angle = -(properties["orientation"][np.argmax(properties["axis_major_length"])] * (180 / np.pi) + 90)
+        angle = angle + 180 if angle < -90 else angle  # Normalize the angle to a valid range
 
-        # Remove empty pixel rows and columns
+        # Rotate the image and mask based on the calculated angle
+        rotated_image = ski.transform.rotate(image_masked, angle, resize=False, mode='edge', preserve_range=True)
+        rotated_mask = ski.transform.rotate(mask, angle, resize=False, mode='edge', preserve_range=True)
+
+        # Remove empty rows and columns (crop the image to the non-empty region)
         rows = np.any(rotated_mask, axis=1)
         cols = np.any(rotated_mask, axis=0)
         rmin, rmax = np.where(rows)[0][[0, -1]]
         cmin, cmax = np.where(cols)[0][[0, -1]]
 
-        # Crop the image to the bounding box
+        # Crop the image and mask to the bounding box of non-empty regions
         image_cropped = rotated_image[rmin:rmax, cmin:cmax]
-        image_cropped = image_cropped[:, :, :3]  # Keep only RGB channels
         mask_cropped = rotated_mask[rmin:rmax, cmin:cmax]
 
-        return mask_cropped, image_cropped
+        # Return the cropped image and mask (exclude alpha channel from the image)
+        return image_cropped[:, :, :3], mask_cropped
+    
+    def CLAHE_transform(self, image, clip_limit=0.5, nbins=32):
+        # Convert image to grayscale and apply CLAHE
+        equalized_img = ski.exposure.equalize_adapthist(np.mean(image, axis=-1), clip_limit=clip_limit, nbins=nbins)
+        equalized_img = ski.filters.median(equalized_img, ski.morphology.disk(1))
+        return torch.tensor(equalized_img, dtype=torch.float32)
 
-    def process_image_to_grey(image):
-        """
-        Convert the image to greyscale.
 
-        Args:
-            image (numpy.ndarray): Input RGB image.
+    def pad_and_resize(self, image):
+        # Pad the image to make it square, with the longer dimension being the target size
+        height, width = image.shape[:2]
+        max_dim = max(height, width)
+        pad_height = (max_dim - height) // 2
+        pad_width = (max_dim - width) // 2
+        image_padded = torch.nn.functional.pad(image, (pad_width, pad_width, pad_height, pad_height), mode='constant', value=0)
 
-        Returns:
-            numpy.ndarray: Greyscale image.
-        """
-        image = ski.color.rgb2gray(image)
-        return ski.util.img_as_ubyte(np.asarray(image))
+        # Resize the image to 512x512, then crop to the desired region
+        image_resized = torchvision.transforms.functional.resize(image_padded.unsqueeze(0), (384, 384)).numpy()[0]
+        return image_resized[96:288, :]
 
-    def enhance_contrast_and_resize(mask, image):
-        """
-        Enhance contrast using CLAHE and resize the image.
+    def __getitem__(self, idx):
+        augmented_datasets = []
+        # Load image
+        file = self.file_list[idx].stream
+        image = Image.open(file)
 
-        Args:
-            mask (numpy.ndarray): Binary mask of the image.
-            image (numpy.ndarray): Greyscale image.
+        # Remove background, rotate the image, and get the mask
+        image, mask = self.remove_bg_and_rotate(image, self.bg_session)
 
-        Returns:
-            numpy.ndarray: Enhanced and resized image.
-        """
-        # Reduce noise
-        image = ski.filters.rank.median(image, ski.morphology.disk(3))
+        # Standardize the image to have pixel values in the range [0, 1]
+        image = np.asarray(image).astype('float32') / 255
 
-        # Apply CLAHE
-        equalized_img = np.asarray(
-            ski.exposure.equalize_adapthist(image, clip_limit=0.6, nbins=48)
-        )
-        equalized_img = ski.filters.rank.median(
-            ski.util.img_as_ubyte(equalized_img), ski.morphology.disk(3)
-        )
+        for i in range(self.N_augmentations):
+            if i != 0:
+                # Apply augmentations to the image
+                processed_image = self.augment_pipe(image = image)["image"]
+            else:
+                # Use the original unaugmented image
+                processed_image = image
 
-        # Set background to 0
-        equalized_img[~mask] = 0
+            # Normalize and apply CLAHE
+            processed_image = self.CLAHE_transform(processed_image)
 
-        # Resize image and crop it to size
-        resized_img = tf.image.resize_with_pad(
-            np.stack((equalized_img,) * 3, axis=-1), 300, 300
-        ).numpy()#[:, :, 0]
+            # Apply mask to remove the background
+            processed_image[~mask] = 0
 
-        return resized_img
+            # Pad and resize the image
+            processed_image = self.pad_and_resize(processed_image)
 
-    # Open image
-    image_ls = []
-    image = Image.open(file_stream)
+            # Convert to tensor and add batch dimension
+            processed_tensor = torch.tensor(processed_image, dtype=torch.float32).unsqueeze(0)
 
-    # Remove background and align wing
-    mask, image = remove_bg_and_rotate(image)
+            augmented_datasets.append(processed_tensor)
 
-    for i in range(6):
-        # Dont augment the first image
-        if i == 0:
-            image_aug = np.asarray(image)
-        else:
-            image_aug = augmentation_model(np.asarray(image)).numpy()
+            if i == 0:
+                ski.io.imsave(self.processed_file_name_list[idx], (processed_image * 255).astype(np.uint8))
 
-        # Transform image to greyscale
-        grey_image = process_image_to_grey(image_aug / 255)
-
-        # Enhance contrast and resize image
-        clahe_image = enhance_contrast_and_resize(mask, grey_image)
-
-        #Flip every second image
-        if i%2 == 0:
-            clahe_image = np.fliplr(clahe_image)
-
-        # Save the first image for preview
-        if i == 0:
-            unaugment_image = Image.fromarray(np.uint8(clahe_image))
-
-        image_ls.append(clahe_image)
-
-    return image_ls, unaugment_image
+        return augmented_datasets

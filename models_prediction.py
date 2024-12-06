@@ -1,141 +1,114 @@
-import tensorflow as tf
 import numpy as np
 import pandas as pd
 import os
+import torch
 
 # Set image size and species names
-IMG_SIZE = 300
 SPECIES_NAMES = [
-    "Cx. modestus",
-    "Ae. cinereus-geminus",
-    "Ae. communis-punctor",
-    "Ae. rusticus",
-    "Ae. sticticus",
-    "Ae. vexans",
-    "An. claviger",
-    "other",
-    "Cq. richiardii",
-    "Ae. aegypti",
-    "Ae. albopictus",
-    "Ae. japonicus",
-    "Ae. koreicus",
-    "An. maculipennis",
-    "Cx. pipiens-torrentium",
-    "An. stephensi",
-    "Cs. morsitans-fumipennis",
-    "Ae. annulipes-group",
-    "Ae. caspius",
-    "Ae. cataphylla",
-    "Cx. vishnui-group",
+    'Ae. aegypti',
+    'Ae. albopictus',
+    'Ae. annulipes-group',
+    'Ae. caspius',
+    'Ae. cataphylla',
+    'Ae. cinereus-geminus pair',
+    'An. claviger-petragani group s.l.',
+    'Ae. communis-punctor pair',
+    'Ae. japonicus',
+    'Ae. koreicus',
+    'An. maculipennis s.l.',
+    'Cx. modestus',
+    'Cs. morsitans-fumipennis pair',
+    'other',
+    'Cx. torrentium-pipiens s.l. pair',
+    'Cq. richiardii',
+    'Ae. rusticus',
+    'An. stephensi',
+    'Ae. sticticus',
+    'Ae. vexans',
+    'Cx. vishnui-group',
 ]
 
 # Load pre-trained model
-cnn_model = tf.keras.models.load_model("static/models/cnn_appmodel.h5", compile=False)
-
+cnn_model = torch.load(os.path.join("static", "models", "model_1_flowing-music-18.pt"), map_location=torch.device('cpu'), weights_only=False)
 
 def logistic_function(x):
-    """
-    Logistic function for converting scores to probabilities.
-
-    Args:
-        x (float): Input score.
-
-    Returns:
-        float: Probability value.
-    """
-    coefficients = 2.278
-    intercept = -7.722
+    coefficients = 2.52
+    intercept = -7.85
     z = np.dot(x, coefficients) + intercept
     return 1 / (1 + np.exp(-z))
 
+def prediction_loop(dataloader):
+    predictions = []
+    with torch.no_grad():
+        for batch, (X) in enumerate(dataloader):
+                # Check if image is wrongly processed (based on the proportion of non-zero pixels)
+                if torch.sum((X > 0)/ 73344) < 0.275:
+                    pred = torch.tensor([[-99] * len(SPECIES_NAMES)])
+                else:
+                    pred = cnn_model(X.unsqueeze(0))
 
-def load_image(file_path):
-    """
-    Load and preprocess an image from the given file path.
+                predictions.append(pred.cpu().clone().detach().numpy())
 
-    Args:
-        file_path (str): Path to the image file.
+    return np.concatenate(predictions)
 
-    Returns:
-        tensor: Preprocessed image tensor.
-    """
-    image = tf.io.read_file(file_path)
-    image = tf.io.decode_png(image, channels=3)
-    image = tf.image.resize(image, [IMG_SIZE, IMG_SIZE])
-    return image
+def get_cnn_prediction(datasets):
+    prediction_list = []
+    # Generate pytorch dataloader
+    for dataset in datasets:
+        dataloader = torch.utils.data.DataLoader(dataset, batch_size=4, shuffle=False)
+        prediction_list.extend(prediction_loop(dataloader))
+    
+    return prediction_list
 
-
-def get_cnn_prediction(dataset, batch_size):
-    """
-    Get CNN model predictions for the given dataset.
-
-    Args:
-        dataset (tf.data.Dataset): Dataset containing images.
-
-    Returns:
-        tuple: Predictions for highest and second highest scores and species names.
-    """
-    # get prediction from model
-    prediction_list = cnn_model.predict(dataset, verbose=0)
-    # reshape prediction list to same images augmented differently
-    stacked_prediction_list = np.asarray(prediction_list).reshape(dataset.__len__().numpy(), # Number of image batches
-                                                                  batch_size, # Number of augmentations
-                                                                  len(SPECIES_NAMES)) # Number of species
-    # get average prediction for each image
-    average_prediction_list = np.mean(stacked_prediction_list, axis=1)
-
-    def parse_prediction(predictions, rank):
-        """
-        Parse the prediction list to get species names and scores.
-
-        Args:
-            predictions (list): List of predictions.
-            rank (int): Rank of the prediction to parse (1 for highest, 2 for second highest).
-
-        Returns:
-            tuple: Arrays of scores and species names.
-        """
-        highest_scores = [np.sort(prediction)[-rank] for prediction in predictions]
-        highest_indices = [
-            np.where(prediction == score)[0][0]
-            for prediction, score in zip(predictions, highest_scores)
+def parse_prediction(predictions, rank):
+    
+    highest_scores = [np.sort(prediction)[-rank] for prediction in predictions]
+    highest_indices = [
+        np.where(prediction == score)[0][0]
+        for prediction, score in zip(predictions, highest_scores)
         ]
-        species_names = [SPECIES_NAMES[idx] for idx in highest_indices]
 
-        return np.asarray(logistic_function(highest_scores)), np.asarray(species_names)
+    species_names = np.asarray([SPECIES_NAMES[idx] for idx in highest_indices])
+    calibrated_highest_scores = np.asarray(logistic_function(highest_scores))
 
-    highest_scores, highest_species = parse_prediction(average_prediction_list, 1)
-    second_highest_scores, second_highest_species = parse_prediction(average_prediction_list, 2)
-
-    return (
-        highest_scores,
-        highest_species,
-        second_highest_scores,
-        second_highest_species,
-    )
-
+    return list(calibrated_highest_scores), list(species_names)
 
 #ef get_system_prediction(folder_path):
-def get_system_prediction(folder_path, dataset, batch_size):
-    """
-    Get system predictions for all images in the specified folder.
+def get_system_prediction(folder_path, datasets, file_name_list):
+    file_name_list = [os.path.join(folder_path, x) for x in file_name_list]
 
-    Args:
-        folder_path (str): Path to the folder containing images.
+    # Get predictions for every augmentation run
+    avg_prediction_list = []
+    for dataset in datasets:
+        prediction_list = get_cnn_prediction(dataset)
+        avg_prediction= np.mean(prediction_list, axis=0)
+        avg_prediction_list.append(avg_prediction)
 
-    Returns:
-        DataFrame: DataFrame containing predictions and confidence scores.
-    """
+    # Get highest and second highest predictions
+    highest_scores, highest_species = parse_prediction(avg_prediction_list, 1)
+    second_highest_scores, second_highest_species = parse_prediction(avg_prediction_list, 2)
 
-    file_list = tf.data.Dataset.list_files(os.path.join(folder_path, "*.png"), shuffle=False)
+    # Check for low confidence predictions
+    for i, score in enumerate(highest_scores):
+        # Do not return prediction if score is too low
+        if (float(score) < 0.00001):
+            highest_species[i] = "Processing Error Detected"
+        if (float(score) < 0.5):
+            highest_species[i] = "Low Confidence Prediction"
+        # Do not return prediction if score is close to zero as it indicates a processing error
 
-    highest_scores, highest_species, second_highest_scores, second_highest_species = (
-        get_cnn_prediction(dataset, batch_size)
-    )
+    for i, score in enumerate(second_highest_scores):
+        # Do not return prediction if score is close to zero as it indicates a processing error
+        if (float(score) < 0.00001):
+            second_highest_species[i] = "Processing Error Detected"
+        # Do not return prediction if score is too low
+        if (float(score) < 0.1) or highest_species[i] == "Low Confidence Prediction":
+            second_highest_species[i] = "Low Confidence Prediction"
 
+    pd.set_option('display.max_colwidth', None) 
     df = pd.DataFrame(
         {
-            "image_path": [f.numpy().decode("utf-8") for f in file_list],
+            "image_path": file_name_list,
             "highest_species_prediction": highest_species,
             "highest_species_confidence": highest_scores,
             "second_highest_species_prediction": second_highest_species,
