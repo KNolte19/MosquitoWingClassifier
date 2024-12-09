@@ -31,7 +31,9 @@ RUN adduser \
     appuser
 
 RUN mkdir -p /app/static/requests \
-    && chown -R appuser:appuser /app/static/requests
+    && mkdir -p /tmp \
+    && chown -R appuser:appuser /app /tmp
+
 
 ENV NUMBA_CACHE_DIR=/tmp    
 
