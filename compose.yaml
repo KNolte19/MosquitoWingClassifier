@@ -3,7 +3,7 @@ services:
     build:
       context: .
     ports:
-      - 8080:8080
+      - 127.0.0.1:8080:8080
     volumes:
       - ./static/requests:/app/static/requests 
 
