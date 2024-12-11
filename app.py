@@ -58,6 +58,9 @@ def upload_folder():
 
     # Check and process each file
     files = request.files.getlist("file")
+    # Only allow image files
+    files = [file for file in files if file.filename.endswith((".jpg", ".jpeg", ".png", ".tif", ".tiff"))]
+    
     file_name_list = [file.filename.split(".")[0]+".png" for file in files]
     processed_file_name_list = [os.path.join(session["request_path_processed"], filename.split(".")[0] + ".png") for filename in file_name_list]
 

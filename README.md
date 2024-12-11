@@ -15,17 +15,14 @@ To deploy BALROG on your local machine, you need to have Python and Docker insta
 BALROG utilises the RemBG library to remove the background, the model is relatively large and to avoid downloading it every time the application is restarted we advice downloading the model weights beforehand.\ 
 `https://github.com/danielgatis/rembg/releases/download/v0.0.0/u2net.onnx`
 
-3. **Build the Docker Image:**\
-`docker build -t app .`
+3. **Build and Run the Docker Image:**\
+`docker compose up -d `
 
-4. **Run Docker** \
-You have to change the path to the copy of this repo on your machine\
-`docker run -p 8080:8080 -v /path/to/repo/app/static/requests:/app/static/requests app`\
-For instance\
-`docker run -p 8080:8080 -v /HansPeter/Documents/app/static/requests:/app/static/requests app`
+4. **Start Docker** \
+`docker compose start`\
 
 5. **Access the Application:**\
-Open your web browser and navigate to `http://localhost:5050`.
+Open your web browser and go to `http://localhost:8080`.
 
 
 ## Features
@@ -40,6 +37,8 @@ Open your web browser and navigate to `http://localhost:5050`.
 
 **Support:** Contact us at kristopher.nolte@bnitm.de for any inquiries or assistance.
 
-**Version:** v0.2
+**Version:** v0.2.1
 
-**Last Updated:** December  6,  2024
+**Last Updated:** December  11,  2024
+
+
