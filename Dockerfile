@@ -34,7 +34,6 @@ RUN mkdir -p /app/static/requests \
     && mkdir -p /tmp \
     && chown -R appuser:appuser /app /tmp
 
-
 ENV NUMBA_CACHE_DIR=/tmp    
 
 # Download dependencies as a separate step to take advantage of Docker's caching.
