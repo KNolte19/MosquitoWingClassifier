@@ -1,3 +1,4 @@
+#!/bin/bash
 mkdir -p /app/static/requests
 chown -R appuser:appuser /app/static/requests
 
