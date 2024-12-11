@@ -6,6 +6,9 @@ services:
     ports:
       - 127.0.0.1:8080:8080
     volumes:
-      - ./static/requests:/app/static/requests 
-
-
+      - ./static/requests:/app/static/requests
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
