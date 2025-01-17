@@ -33,9 +33,9 @@ Open your web browser and go to `http://localhost:8080`.
 
 ---
 
-**Maintained by:** Kristopher Nolte
+**Maintained by:** ANONYM FOR REVIEW
 
-**Support:** Contact us at kristopher.nolte@bnitm.de for any inquiries or assistance.
+**Support:** Contact us at ANONYM FOR REVIEW@mail.xx for any inquiries or assistance.
 
 **Version:** v0.2.1
 

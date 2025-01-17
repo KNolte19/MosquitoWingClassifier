@@ -29,7 +29,7 @@ SPECIES_NAMES = [
 ]
 
 # Load pre-trained model
-cnn_model = torch.load(os.path.join("static", "models", "model_1_flowing-music-18.pt"), map_location=torch.device('cpu'), weights_only=False)
+cnn_model = torch.load(os.path.join("static", "models", "model_2_deft-bird-19.pt"), map_location=torch.device('cpu'), weights_only=False)
 
 def logistic_function(x):
     coefficients = 2.52
