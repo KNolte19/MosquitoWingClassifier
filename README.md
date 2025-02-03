@@ -33,12 +33,12 @@ Open your web browser and go to `http://localhost:8080`.
 
 ---
 
-**Maintained by:** ANONYM FOR REVIEW
+**Maintained by:** Kristopher Nolte
 
-**Support:** Contact us at ANONYM FOR REVIEW@mail.xx for any inquiries or assistance.
+**Support:** Contact us at kristopher.nolte@bnitm.de for any inquiries or assistance.
 
-**Version:** v0.2.1
+**Version:** v0.2.2
 
-**Last Updated:** December  11,  2024
+**Last Updated:** Febraur  03,  2025
 
 
