@@ -33,8 +33,8 @@ If you want to have an idea how the application will look like when installed yo
 - **Confidence Metrics:** Each result includes a confidence score indicating the model's certainty in its classification.
 - **Download Results:** Users can download the classification report or processed images using the provided identifier.
   
-# License
-This repository contains code licensed under the [Creative Commons Attribution 4.0 International (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/) license.  
+## License
+This code and all data in this repository are licensed under the [Creative Commons Attribution 4.0 International (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/) license.  
 You are free to share and adapt the code as long as you provide appropriate credit.  
 
 ---
