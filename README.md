@@ -25,7 +25,7 @@ BALROG utilises the RemBG library to remove the background, the model is relativ
 Open your web browser and go to `http://localhost:8080`.
 
 ## Getting Started
-If you want to have an idea how the application will look like when installed you can check out our web hosted demonstrator. Login credentials and Passwords can be requested from the maintainer of this repository. Please note that this is not the most efficient way of classifying large amount of images. Please use the installable version for this: `https://balrog.bnitm.de`
+If you want to have an idea how the application will look like when installed you can check out our web hosted demonstrator. Login credentials and Passwords can be requested from the maintainer of this repository. Please note that this is not the most efficient way of classifying large amount of images. Please use the installable version for this: `https://balrog.bnitm.de` You can find the access code for the webside on the file `BalrogWebsiteAccess.txt`
 
 ## Features
 - **Image Upload:** Users can upload images of mosquito wings directly through the web interface.
